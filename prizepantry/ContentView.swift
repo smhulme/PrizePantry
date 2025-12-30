@@ -9,58 +9,80 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    // Access the database context to save/delete data
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    
+    // Automatically fetch the list of children and stay in sync
+    @Query(sort: \Child.name) private var children: [Child]
 
     var body: some View {
-        NavigationSplitView {
+        NavigationStack {
             List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                ForEach(children) { child in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(child.name)
+                                .font(.headline)
+                            Text("\(child.tokenBalance) Tokens")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        // The Subtract Button
+                        Button {
+                            if child.tokenBalance > 0 {
+                                child.tokenBalance -= 1 // SwiftData saves the new lower balance
+                            }
+                        } label: {
+                            Image(systemName: "minus.circle")
+                                .font(.title2)
+                                .foregroundStyle(child.tokenBalance > 0 ? .red : .gray)
+                        }
+                        .buttonStyle(.borderless) // Prevents the whole row from being tapped at once
+                        .disabled(child.tokenBalance == 0) // Cannot go below zero tokens
+
+                        // The Add Button (Your existing one)
+                        Button {
+                            child.tokenBalance += 1
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(.green)
+                        }
+                        .buttonStyle(.borderless)
                     }
                 }
-                .onDelete(perform: deleteItems)
+                .onDelete(perform: deleteChildren)
             }
-#if os(macOS)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-#endif
+            .navigationTitle("Prize Pantry")
             .toolbar {
-#if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-#endif
                 ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
+                    Button {
+                        addChild()
+                    } label: {
+                        Label("Add Child", systemImage: "person.badge.plus")
                     }
                 }
             }
-        } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+            .overlay {
+                if children.isEmpty {
+                    ContentUnavailableView("No Children", systemImage: "person.3", description: Text("Tap the + to add a child to the pantry."))
+                }
             }
         }
     }
-}
 
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+    private func addChild() {
+        let names = ["Shawn", "Seth", "Taylor", "Riley"]
+        let newChild = Child(name: names.randomElement() ?? "New Child")
+        modelContext.insert(newChild) // Inserts into the database
+    }
+
+    private func deleteChildren(offsets: IndexSet) {
+        for index in offsets {
+            modelContext.delete(children[index])
+        }
+    }
 }

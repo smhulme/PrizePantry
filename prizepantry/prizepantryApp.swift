@@ -11,8 +11,9 @@ import SwiftData
 @main
 struct prizepantryApp: App {
     var sharedModelContainer: ModelContainer = {
+        // Change 'Item.self' to 'Child.self' here
         let schema = Schema([
-            Item.self,
+            Child.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
