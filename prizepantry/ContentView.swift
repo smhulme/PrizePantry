@@ -9,11 +9,12 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    // Access the database context to save/delete data
     @Environment(\.modelContext) private var modelContext
-    
-    // Automatically fetch the list of children and stay in sync
     @Query(sort: \Child.name) private var children: [Child]
+
+    // 1. State variables to manage the pop-up and input
+    @State private var showingAddChildSheet = false
+    @State private var newChildName = ""
 
     var body: some View {
         NavigationStack {
@@ -40,10 +41,10 @@ struct ContentView: View {
                                 .font(.title2)
                                 .foregroundStyle(child.tokenBalance > 0 ? .red : .gray)
                         }
-                        .buttonStyle(.borderless) // Prevents the whole row from being tapped at once
-                        .disabled(child.tokenBalance == 0) // Cannot go below zero tokens
+                        .buttonStyle(.borderless)
+                        .disabled(child.tokenBalance == 0)
 
-                        // The Add Button (Your existing one)
+                        // The Add Button
                         Button {
                             child.tokenBalance += 1
                         } label: {
@@ -60,11 +61,37 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItem {
                     Button {
-                        addChild()
+                        // 2. Open the sheet instead of adding a random child
+                        showingAddChildSheet = true
                     } label: {
                         Label("Add Child", systemImage: "person.badge.plus")
                     }
                 }
+            }
+            // 3. The Pop-up Input Window
+            .sheet(isPresented: $showingAddChildSheet) {
+                NavigationStack {
+                    Form {
+                        TextField("Child's Name", text: $newChildName)
+                    }
+                    .navigationTitle("Add New Child")
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Save") {
+                                addChild()
+                                showingAddChildSheet = false
+                            }
+                            .disabled(newChildName.isEmpty) // Prevent saving empty names
+                        }
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") {
+                                showingAddChildSheet = false
+                                newChildName = ""
+                            }
+                        }
+                    }
+                }
+                .presentationDetents([.medium]) // Makes it a half-height pop-up
             }
             .overlay {
                 if children.isEmpty {
@@ -75,9 +102,10 @@ struct ContentView: View {
     }
 
     private func addChild() {
-        let names = ["Shawn", "Seth", "Taylor", "Riley"]
-        let newChild = Child(name: names.randomElement() ?? "New Child")
-        modelContext.insert(newChild) // Inserts into the database
+        // 4. Create child using the text from the TextField
+        let newChild = Child(name: newChildName)
+        modelContext.insert(newChild)
+        newChildName = "" // Reset name for next time
     }
 
     private func deleteChildren(offsets: IndexSet) {
