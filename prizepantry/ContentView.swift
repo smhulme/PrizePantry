@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct ContentView: View {
-    // Replace @Query with our new remote data manager
     @StateObject var viewModel = ChildViewModel()
     
     @State private var showingAddChildSheet = false
@@ -42,18 +41,43 @@ struct ContentView: View {
             }
             .navigationTitle("Prize Pantry")
             .toolbar {
-                Button { showingAddChildSheet = true } label: {
-                    Label("Add Child", systemImage: "person.badge.plus")
+                // --- NEW CODE START ---
+                // 1. The "Gear" Icon that takes you to the Setup Screen
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink(destination: MachineSetupView(viewModel: viewModel)) {
+                        Image(systemName: "gear")
+                    }
+                }
+                // --- NEW CODE END ---
+
+                // 2. Your existing "Add Child" button
+                ToolbarItem(placement: .primaryAction) {
+                    Button { showingAddChildSheet = true } label: {
+                        Label("Add Child", systemImage: "person.badge.plus")
+                    }
                 }
             }
             .sheet(isPresented: $showingAddChildSheet) {
                 NavigationStack {
-                    Form { TextField("Child's Name", text: $newChildName) }
+                    Form {
+                        TextField("Child's Name", text: $newChildName)
+                    }
+                    // This adds the heading you are looking for
+                    .navigationTitle("Add a Child")
+                    .navigationBarTitleDisplayMode(.inline) // Makes the title smaller/centered
                     .toolbar {
-                        Button("Save") {
-                            viewModel.addChild(name: newChildName)
-                            newChildName = ""
-                            showingAddChildSheet = false
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Save") {
+                                viewModel.addChild(name: newChildName)
+                                newChildName = ""
+                                showingAddChildSheet = false
+                            }
+                        }
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") {
+                                showingAddChildSheet = false
+                                newChildName = ""
+                            }
                         }
                     }
                 }

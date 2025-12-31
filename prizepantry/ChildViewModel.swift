@@ -49,4 +49,19 @@ class ChildViewModel: ObservableObject {
             }
         }
     }
+    // Add this to ChildViewModel.swift
+    func assignTagToChild(child: Child, tagID: String) {
+        guard let id = child.id else { return }
+        
+        // Update the specific child's document with the new tag
+        db.collection("children").document(id).updateData([
+            "rfidTag": tagID
+        ]) { error in
+            if let error = error {
+                print("Error assigning tag: \(error)")
+            } else {
+                print("Successfully assigned tag \(tagID) to \(child.name)")
+            }
+        }
+    }
 }

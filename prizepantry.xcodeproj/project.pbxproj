@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		2CDAB4B12F0450D600376B93 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 2CDAB4B02F0450D600376B93 /* FirebaseFirestore */; };
 		2CDAB4B32F0450D600376B93 /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 2CDAB4B22F0450D600376B93 /* FirebaseFirestoreCombine-Community */; };
+		2CDAB4BB2F058A8B00376B93 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 2CDAB4BA2F058A8300376B93 /* .gitignore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +33,7 @@
 		2CDAB47C2F03B74A00376B93 /* prizepantry.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = prizepantry.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CDAB48C2F03B74B00376B93 /* prizepantryTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = prizepantryTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CDAB4962F03B74B00376B93 /* prizepantryUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = prizepantryUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2CDAB4BA2F058A8300376B93 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -82,6 +84,7 @@
 		2CDAB4732F03B74A00376B93 = {
 			isa = PBXGroup;
 			children = (
+				2CDAB4BA2F058A8300376B93 /* .gitignore */,
 				2CDAB47E2F03B74A00376B93 /* prizepantry */,
 				2CDAB48F2F03B74B00376B93 /* prizepantryTests */,
 				2CDAB4992F03B74B00376B93 /* prizepantryUITests */,
@@ -224,6 +227,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2CDAB4BB2F058A8B00376B93 /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
