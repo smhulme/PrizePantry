@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		2CDAB4B12F0450D600376B93 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 2CDAB4B02F0450D600376B93 /* FirebaseFirestore */; };
+		2CDAB4B32F0450D600376B93 /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 2CDAB4B22F0450D600376B93 /* FirebaseFirestoreCombine-Community */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		2CDAB48D2F03B74B00376B93 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +57,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2CDAB4B12F0450D600376B93 /* FirebaseFirestore in Frameworks */,
+				2CDAB4B32F0450D600376B93 /* FirebaseFirestoreCombine-Community in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +119,8 @@
 			);
 			name = prizepantry;
 			packageProductDependencies = (
+				2CDAB4B02F0450D600376B93 /* FirebaseFirestore */,
+				2CDAB4B22F0450D600376B93 /* FirebaseFirestoreCombine-Community */,
 			);
 			productName = prizepantry;
 			productReference = 2CDAB47C2F03B74A00376B93 /* prizepantry.app */;
@@ -195,6 +204,9 @@
 			);
 			mainGroup = 2CDAB4732F03B74A00376B93;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				2CDAB4AF2F0450D600376B93 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2CDAB47D2F03B74A00376B93 /* Products */;
 			projectDirPath = "";
@@ -391,6 +403,7 @@
 				CODE_SIGN_ENTITLEMENTS = prizepantry/prizepantry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WG26LH7N8J;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -428,6 +441,7 @@
 				CODE_SIGN_ENTITLEMENTS = prizepantry/prizepantry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WG26LH7N8J;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -583,6 +597,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		2CDAB4AF2F0450D600376B93 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.7.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2CDAB4B02F0450D600376B93 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2CDAB4AF2F0450D600376B93 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		2CDAB4B22F0450D600376B93 /* FirebaseFirestoreCombine-Community */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2CDAB4AF2F0450D600376B93 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = "FirebaseFirestoreCombine-Community";
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 2CDAB4742F03B74A00376B93 /* Project object */;
 }
