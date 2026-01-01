@@ -1,17 +1,36 @@
 import Foundation
 import FirebaseFirestore
+import FirebaseAuth
 
 class ChildViewModel: ObservableObject {
     @Published var children: [Child] = []
     private var db = Firestore.firestore()
+    private var listenerRegistration: ListenerRegistration?
+    
+    // Helper to get the current secure User ID
+    private var userId: String? {
+        return Auth.auth().currentUser?.uid
+    }
     
     init() {
         fetchData()
     }
     
-    // This function listens for changes in real-time
+    deinit {
+        listenerRegistration?.remove()
+    }
+    
     func fetchData() {
-        db.collection("children").addSnapshotListener { (querySnapshot, error) in
+        // Ensure we have a user ID. If not, stop.
+        guard let uid = userId else {
+            print("No user logged in")
+            return
+        }
+        
+        // Listen to: users -> {uid} -> children
+        let ref = db.collection("users").document(uid).collection("children")
+        
+        listenerRegistration = ref.addSnapshotListener { (querySnapshot, error) in
             guard let documents = querySnapshot?.documents else {
                 print("No documents")
                 return
@@ -24,37 +43,38 @@ class ChildViewModel: ObservableObject {
     }
     
     func addChild(name: String) {
+        guard let uid = userId else { return }
+        
         let newChild = Child(name: name, tokenBalance: 0)
         do {
-            // Adds a new document to the "children" collection
-            try db.collection("children").addDocument(from: newChild)
+            try db.collection("users").document(uid).collection("children").addDocument(from: newChild)
         } catch {
-            print(error)
+            print("Error adding child: \(error)")
         }
     }
     
     func updateTokens(child: Child, amount: Int) {
-        if let id = child.id {
-            // Updates the specific child in the cloud
-            db.collection("children").document(id).updateData([
-                "tokenBalance": amount
-            ])
-        }
+        guard let uid = userId, let childId = child.id else { return }
+        
+        db.collection("users").document(uid).collection("children").document(childId).updateData([
+            "tokenBalance": amount
+        ])
     }
     
     func deleteChild(at offsets: IndexSet) {
+        guard let uid = userId else { return }
+        
         offsets.map { children[$0] }.forEach { child in
             if let id = child.id {
-                db.collection("children").document(id).delete()
+                db.collection("users").document(uid).collection("children").document(id).delete()
             }
         }
     }
-    // Add this to ChildViewModel.swift
+    
     func assignTagToChild(child: Child, tagID: String) {
-        guard let id = child.id else { return }
+        guard let uid = userId, let childId = child.id else { return }
         
-        // Update the specific child's document with the new tag
-        db.collection("children").document(id).updateData([
+        db.collection("users").document(uid).collection("children").document(childId).updateData([
             "rfidTag": tagID
         ]) { error in
             if let error = error {
@@ -62,6 +82,16 @@ class ChildViewModel: ObservableObject {
             } else {
                 print("Successfully assigned tag \(tagID) to \(child.name)")
             }
+        }
+    }
+    
+    // Optional: Sign out function to be called from UI
+    func signOut() {
+        do {
+            try Auth.auth().signOut()
+            self.children = [] // Clear data on sign out
+        } catch {
+            print("Error signing out: \(error)")
         }
     }
 }

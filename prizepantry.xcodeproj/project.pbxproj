@@ -7,9 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2CDAB4B12F0450D600376B93 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 2CDAB4B02F0450D600376B93 /* FirebaseFirestore */; };
+		2CDAB4B12F0450D600376B93 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 2CDAB4B02F0450D600376B93 /* FirebaseFirestore */; settings = {ATTRIBUTES = (Required, ); }; };
 		2CDAB4B32F0450D600376B93 /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 2CDAB4B22F0450D600376B93 /* FirebaseFirestoreCombine-Community */; };
 		2CDAB4BB2F058A8B00376B93 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 2CDAB4BA2F058A8300376B93 /* .gitignore */; };
+		2CDAB4BE2F06231C00376B93 /* AuthenticationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CDAB4BD2F06231C00376B93 /* AuthenticationServices.framework */; };
+		2CDAB4C02F06232200376B93 /* CryptoKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CDAB4BF2F06232200376B93 /* CryptoKit.framework */; };
+		2CDAB4C62F06245100376B93 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 2CDAB4C52F06245100376B93 /* FirebaseAuth */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,6 +37,8 @@
 		2CDAB48C2F03B74B00376B93 /* prizepantryTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = prizepantryTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CDAB4962F03B74B00376B93 /* prizepantryUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = prizepantryUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CDAB4BA2F058A8300376B93 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		2CDAB4BD2F06231C00376B93 /* AuthenticationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AuthenticationServices.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/AuthenticationServices.framework; sourceTree = DEVELOPER_DIR; };
+		2CDAB4BF2F06232200376B93 /* CryptoKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CryptoKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/CryptoKit.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -59,6 +64,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2CDAB4C02F06232200376B93 /* CryptoKit.framework in Frameworks */,
+				2CDAB4C62F06245100376B93 /* FirebaseAuth in Frameworks */,
+				2CDAB4BE2F06231C00376B93 /* AuthenticationServices.framework in Frameworks */,
 				2CDAB4B12F0450D600376B93 /* FirebaseFirestore in Frameworks */,
 				2CDAB4B32F0450D600376B93 /* FirebaseFirestoreCombine-Community in Frameworks */,
 			);
@@ -88,6 +96,7 @@
 				2CDAB47E2F03B74A00376B93 /* prizepantry */,
 				2CDAB48F2F03B74B00376B93 /* prizepantryTests */,
 				2CDAB4992F03B74B00376B93 /* prizepantryUITests */,
+				2CDAB4BC2F06231C00376B93 /* Frameworks */,
 				2CDAB47D2F03B74A00376B93 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -100,6 +109,15 @@
 				2CDAB4962F03B74B00376B93 /* prizepantryUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		2CDAB4BC2F06231C00376B93 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2CDAB4BF2F06232200376B93 /* CryptoKit.framework */,
+				2CDAB4BD2F06231C00376B93 /* AuthenticationServices.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -124,6 +142,7 @@
 			packageProductDependencies = (
 				2CDAB4B02F0450D600376B93 /* FirebaseFirestore */,
 				2CDAB4B22F0450D600376B93 /* FirebaseFirestoreCombine-Community */,
+				2CDAB4C52F06245100376B93 /* FirebaseAuth */,
 			);
 			productName = prizepantry;
 			productReference = 2CDAB47C2F03B74A00376B93 /* prizepantry.app */;
@@ -623,6 +642,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2CDAB4AF2F0450D600376B93 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = "FirebaseFirestoreCombine-Community";
+		};
+		2CDAB4C52F06245100376B93 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2CDAB4AF2F0450D600376B93 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
