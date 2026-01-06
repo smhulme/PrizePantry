@@ -1,18 +1,3 @@
-//
-//  ScreenTimeManager.swift
-//  prizepantry
-//
-//  Created by Shawn Hulme on 1/6/26.
-//
-
-
-//
-//  ScreenTimeManager.swift
-//  prizepantry
-//
-//  Created for PrizePantry Screen Time Logic
-//
-
 import Foundation
 import FamilyControls
 import ManagedSettings
@@ -39,15 +24,20 @@ class ScreenTimeManager: ObservableObject {
     private let store = ManagedSettingsStore(named: .lockedApps)
     private let center = DeviceActivityCenter()
     
+    // REPLACE with your actual App Group ID from Step 1
+    let appGroupID = "group.com.prizepantry.tokentime"
+    
     init() {
-        // Load saved selection from UserDefaults if it exists
-        if let data = UserDefaults.standard.data(forKey: "SavedActivitySelection"),
+        // Load saved selection from App Group defaults
+        let defaults = UserDefaults(suiteName: appGroupID)
+        if let data = defaults?.data(forKey: "SavedActivitySelection"),
            let selection = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) {
             self.activitySelection = selection
         }
     }
     
-    // 1. Request Permission (Call this when Child View loads)
+    // 1. Request Permission
+    // Updated to handle .individual (if testing on parent device) or .child
     func requestAuthorization() {
         Task {
             do {
@@ -59,15 +49,20 @@ class ScreenTimeManager: ObservableObject {
         }
     }
     
-    // 2. Save the list of apps to block and Apply the Shield immediately
+    // 2. Save the list of apps and Lock them immediately
     func saveSelectionAndLock() {
-        // Save to disk
+        // Save to Shared App Group
+        let defaults = UserDefaults(suiteName: appGroupID)
         if let data = try? JSONEncoder().encode(activitySelection) {
-            UserDefaults.standard.set(data, forKey: "SavedActivitySelection")
+            defaults?.set(data, forKey: "SavedActivitySelection")
         }
         
-        // Apply restrictions (Block the apps)
-        // We set the "application" property of the shield to the tokens of selected apps.
+        // Apply restrictions immediately (Block the apps)
+        blockApps()
+    }
+    
+    // Helper to apply shields
+    func blockApps() {
         store.shield.applications = activitySelection.applicationTokens
         store.shield.webDomains = activitySelection.webDomainTokens
         store.shield.applicationCategories = ShieldSettings.ActivityCategoryPolicy.specific(activitySelection.categoryTokens)
@@ -78,11 +73,12 @@ class ScreenTimeManager: ObservableObject {
     func unlockApps(forMinutes minutes: Int) {
         // 1. Clear the shields immediately
         store.clearAllSettings()
-        
         print("Apps unlocked for \(minutes) minutes.")
         
-        // 2. Schedule a DeviceActivity that starts NOW and ends in X minutes.
-        // When this activity ENDS, the Monitor Extension will kick in to re-lock the apps.
+        // 2. Stop any existing schedules so we don't have overlapping timers
+        center.stopMonitoring([.unlockSession])
+        
+        // 3. Schedule the "Relock" event
         let now = Date()
         let end = Calendar.current.date(byAdding: .minute, value: minutes, to: now)!
         

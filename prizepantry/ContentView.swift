@@ -169,6 +169,9 @@ struct ContentView: View {
                     }
                     .presentationDetents([.medium])
                 }
+                .onAppear {
+                                    screenTimeManager.requestAuthorization()
+                }
             }
         }
     }
