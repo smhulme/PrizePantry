@@ -12,6 +12,7 @@ class ChildViewModel: ObservableObject {
     
     // UI State
     @Published var invitationCode: String?
+    @Published var settingsUnlockCode: String? // NEW: For admin configuration
     @Published var errorMessage: String?
     
     // Internal State
@@ -19,7 +20,6 @@ class ChildViewModel: ObservableObject {
     private var childrenListener: ListenerRegistration?
     private var childProfileListener: ListenerRegistration?
     
-    // NEW: Store the Parent's ID so the child can write to the correct path
     private var currentParentId: String?
     
     private var userId: String?  {
@@ -39,7 +39,6 @@ class ChildViewModel: ObservableObject {
     func checkUserRole() {
         guard let uid = userId else { return }
         
-        // Check if this user has a "UserProfile" document indicating they are a child
         let docRef = db.collection("users").document(uid)
         
         docRef.getDocument { document, error in
@@ -48,16 +47,13 @@ class ChildViewModel: ObservableObject {
                let parentId = profile.linkedParentId,
                let childId = profile.linkedChildId {
                 
-                // USER IS A CHILD
                 DispatchQueue.main.async {
                     self.isChildAccount = true
-                    // NEW: Save the Parent ID so we can use it later in updateTokens
                     self.currentParentId = parentId
                 }
                 self.listenToLinkedChild(parentId: parentId, childId: childId)
                 
             } else {
-                // USER IS A PARENT (Default)
                 DispatchQueue.main.async { self.isChildAccount = false }
                 self.fetchParentData()
             }
@@ -81,14 +77,12 @@ class ChildViewModel: ObservableObject {
         try? db.collection("users").document(uid).collection("children").addDocument(from: newChild)
     }
     
-    // MARK: - Shared / Token Logic (FIXED)
+    // MARK: - Shared / Token Logic
     func updateTokens(child: Child, amount: Int) {
-        // FIXED: If we are a child, we must update the PARENT'S document, not our own.
-        // If we are a parent, we update our own document (userId).
         let targetUid = isChildAccount ? currentParentId : userId
         
         guard let uid = targetUid, let childId = child.id else {
-            print("Error: Could not determine document path. ParentID missing?")
+            print("Error: Could not determine document path.")
             return
         }
         
@@ -97,7 +91,7 @@ class ChildViewModel: ObservableObject {
         ])
     }
     
-    func deleteChild(at offsets:  IndexSet) {
+    func deleteChild(at offsets: IndexSet) {
         guard let uid = userId else { return }
         offsets.map { children[$0] }.forEach { child in
             if let id = child.id {
@@ -111,13 +105,39 @@ class ChildViewModel: ObservableObject {
         db.collection("users").document(uid).collection("children").document(childId).updateData(["rfidTag": tagID])
     }
     
-    // MARK: - Invitation System (Parent Side)
+    // MARK: - Admin Access (NEW)
+    func generateSettingsUnlockCode() {
+        let code = String(Int.random(in: 100000...999999))
+        let data: [String: Any] = [
+            "createdAt": FieldValue.serverTimestamp(),
+            "createdBy": Auth.auth().currentUser?.uid ?? "unknown"
+        ]
+        
+        db.collection("unlock_codes").document(code).setData(data) { error in
+            if let error = error {
+                print("Error generating code: \(error)")
+            } else {
+                DispatchQueue.main.async { self.settingsUnlockCode = code }
+            }
+        }
+    }
+    
+    func verifySettingsUnlockCode(code: String, completion: @escaping (Bool) -> Void) {
+        let docRef = db.collection("unlock_codes").document(code)
+        docRef.getDocument { document, _ in
+            if let document = document, document.exists {
+                docRef.delete() // One-time use
+                completion(true)
+            } else {
+                completion(false)
+            }
+        }
+    }
+
+    // MARK: - Invitation System
     func generateInviteCode(for child: Child) {
         guard let uid = userId, let childId = child.id else { return }
-        
-        // Generate a random 6-digit code
         let code = String(Int.random(in: 100000...999999))
-        
         let invite = Invitation(parentId: uid, childId: childId, createdAt: Date())
         
         do {
@@ -128,32 +148,19 @@ class ChildViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Linking Logic (Child Side)
     func redeemInviteCode(code: String) {
         guard let uid = Auth.auth().currentUser?.uid else { return }
-        
-        db.collection("invitations").document(code).getDocument { snapshot, error in
+        db.collection("invitations").document(code).getDocument { snapshot, _ in
             if let data = snapshot?.data(),
                let parentId = data["parentId"] as? String,
                let childId = data["childId"] as? String {
                 
-                // 1. Write the child's UID into the PARENT'S document
                 self.db.collection("users").document(parentId)
                     .collection("children").document(childId)
-                    .updateData(["linkedUserId": uid]) { error in
-                        if let error = error {
-                            print("Failed to link to parent: \(error.localizedDescription)")
-                        }
-                    }
+                    .updateData(["linkedUserId": uid])
                 
-                // 2. Create the child's own profile doc so they know who their parent is
-                let profileData: [String: Any] = [
-                    "linkedParentId": parentId,
-                    "linkedChildId": childId
-                ]
+                let profileData: [String: Any] = ["linkedParentId": parentId, "linkedChildId": childId]
                 self.db.collection("users").document(uid).setData(profileData)
-                
-                // 3. Cleanup
                 self.db.collection("invitations").document(code).delete()
                 self.checkUserRole()
             }
@@ -162,42 +169,29 @@ class ChildViewModel: ObservableObject {
     
     // MARK: - Child Logic
     func listenToLinkedChild(parentId: String, childId: String) {
-        print("DEBUG [TokenTime]: Starting listener for Parent: \(parentId), ChildDoc: \(childId)")
-        
         let ref = db.collection("users").document(parentId).collection("children").document(childId)
-        
         childProfileListener = ref.addSnapshotListener { document, error in
-            if let error = error {
-                print("DEBUG [TokenTime]: Firestore Error: \(error.localizedDescription)")
-                return
-            }
-            
-            guard let document = document, document.exists else {
-                print("DEBUG [TokenTime]: Document is nil or does not exist")
-                return
-            }
-            
+            if let error = error { return }
+            guard let document = document, document.exists else { return }
             do {
                 self.linkedChildProfile = try document.data(as: Child.self)
             } catch {
-                print("DEBUG [TokenTime]: Decoding Error: \(error)")
+                print("Decoding Error: \(error)")
             }
         }
     }
     
-    // MARK: - Authentication
     func signOut() {
         do {
             try Auth.auth().signOut()
             self.children = []
             self.linkedChildProfile = nil
             self.isChildAccount = false
-            self.currentParentId = nil // Clear the parent ID
+            self.currentParentId = nil
             self.invitationCode = nil
             self.errorMessage = nil
         } catch {
             print("Error signing out: \(error.localizedDescription)")
-            self.errorMessage = "Failed to sign out"
         }
     }
 }

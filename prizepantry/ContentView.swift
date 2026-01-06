@@ -1,9 +1,7 @@
 import SwiftUI
-import FamilyControls // Import needed for the picker
 
 struct ContentView: View {
     @StateObject var viewModel = ChildViewModel()
-    @StateObject var screenTimeManager = ScreenTimeManager.shared // Access ScreenTimeManager
     
     // Binding to control the app's root login state
     @Binding var isLoggedIn: Bool
@@ -12,11 +10,11 @@ struct ContentView: View {
     @State private var newChildName = ""
     @State private var selectedChildForInvite: Child?
     
-    // State for the Family Activity Picker
-    @State private var isPickerPresented = false
+    // State for showing the Admin Code (New Feature)
+    @State private var showingUnlockCodeSheet = false
 
     var body: some View {
-        // 1. CHECK MODE: If the user is linked as a child, show the read-only dashboard
+        // 1. CHECK MODE: If the user is linked as a child, show the child dashboard
         if viewModel.isChildAccount {
             ChildDashboardView(viewModel: viewModel)
         }
@@ -40,7 +38,7 @@ struct ContentView: View {
                                     .font(.subheadline).foregroundStyle(.secondary)
                                 
                                 if child.linkedUserId != nil {
-                                    Text("Linked to Apple ID")
+                                    Text("Linked")
                                         .font(.caption)
                                         .foregroundStyle(.green)
                                 }
@@ -57,7 +55,7 @@ struct ContentView: View {
                             .buttonStyle(.borderless)
                             .padding(.trailing, 10)
                             
-                            // Token Controls
+                            // --- RESTORED: Token Controls ---
                             Button {
                                 if child.tokenBalance > 0 {
                                     viewModel.updateTokens(child: child, amount: child.tokenBalance - 1)
@@ -73,6 +71,7 @@ struct ContentView: View {
                                 Image(systemName: "plus.circle.fill").foregroundStyle(.green)
                             }
                             .buttonStyle(.borderless)
+                            // --------------------------------
                         }
                     }
                     .onDelete(perform: viewModel.deleteChild)
@@ -86,9 +85,10 @@ struct ContentView: View {
                                 Image(systemName: "gear")
                             }
                             
-                            // --- NEW: Configure Locked Apps Button ---
+                            // Configure Apps Button (Generates Admin Code)
                             Button {
-                                isPickerPresented = true
+                                viewModel.generateSettingsUnlockCode()
+                                showingUnlockCodeSheet = true
                             } label: {
                                 Image(systemName: "lock.shield")
                                     .foregroundStyle(.blue)
@@ -113,13 +113,35 @@ struct ContentView: View {
                         }
                     }
                 }
-                // --- FAMILY ACTIVITY PICKER (Moves config to Parent Side) ---
-                .familyActivityPicker(isPresented: $isPickerPresented, selection: $screenTimeManager.activitySelection)
-                .onChange(of: isPickerPresented) { _, isPresented in
-                    if !isPresented {
-                        // Save changes when the parent closes the picker
-                        screenTimeManager.saveSelectionAndLock()
+                // Sheet to display the Admin Code to the Parent
+                .sheet(isPresented: $showingUnlockCodeSheet) {
+                    VStack(spacing: 20) {
+                        Image(systemName: "lock.open.iphone")
+                            .font(.system(size: 60))
+                            .foregroundStyle(.blue)
+                        
+                        Text("Configure Child's Device")
+                            .font(.headline)
+                        
+                        Text("Enter this code on the child's device to access their App Lock settings:")
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal)
+                        
+                        if let code = viewModel.settingsUnlockCode {
+                            Text(code)
+                                .font(.system(size: 50, weight: .bold, design: .monospaced))
+                                .foregroundStyle(.blue)
+                        } else {
+                            ProgressView()
+                        }
+                        
+                        Button("Done") {
+                            showingUnlockCodeSheet = false
+                        }
+                        .padding(.top)
                     }
+                    .presentationDetents([.medium])
                 }
                 // Sheet to show the 6-digit Invite Code
                 .sheet(item: $selectedChildForInvite) { child in
@@ -168,9 +190,6 @@ struct ContentView: View {
                         }
                     }
                     .presentationDetents([.medium])
-                }
-                .onAppear {
-                                    screenTimeManager.requestAuthorization()
                 }
             }
         }
