@@ -14,9 +14,13 @@ class ChildViewModel: ObservableObject {
     @Published var invitationCode: String?
     @Published var errorMessage: String?
     
+    // Internal State
     private var db = Firestore.firestore()
     private var childrenListener: ListenerRegistration?
     private var childProfileListener: ListenerRegistration?
+    
+    // NEW: Store the Parent's ID so the child can write to the correct path
+    private var currentParentId: String?
     
     private var userId: String?  {
         return Auth.auth().currentUser?.uid
@@ -45,7 +49,11 @@ class ChildViewModel: ObservableObject {
                let childId = profile.linkedChildId {
                 
                 // USER IS A CHILD
-                DispatchQueue.main.async { self.isChildAccount = true }
+                DispatchQueue.main.async {
+                    self.isChildAccount = true
+                    // NEW: Save the Parent ID so we can use it later in updateTokens
+                    self.currentParentId = parentId
+                }
                 self.listenToLinkedChild(parentId: parentId, childId: childId)
                 
             } else {
@@ -73,8 +81,17 @@ class ChildViewModel: ObservableObject {
         try? db.collection("users").document(uid).collection("children").addDocument(from: newChild)
     }
     
+    // MARK: - Shared / Token Logic (FIXED)
     func updateTokens(child: Child, amount: Int) {
-        guard let uid = userId, let childId = child.id else { return }
+        // FIXED: If we are a child, we must update the PARENT'S document, not our own.
+        // If we are a parent, we update our own document (userId).
+        let targetUid = isChildAccount ? currentParentId : userId
+        
+        guard let uid = targetUid, let childId = child.id else {
+            print("Error: Could not determine document path. ParentID missing?")
+            return
+        }
+        
         db.collection("users").document(uid).collection("children").document(childId).updateData([
             "tokenBalance": amount
         ])
@@ -145,35 +162,25 @@ class ChildViewModel: ObservableObject {
     
     // MARK: - Child Logic
     func listenToLinkedChild(parentId: String, childId: String) {
-        // 1. Initial log to confirm the function is actually running
         print("DEBUG [TokenTime]: Starting listener for Parent: \(parentId), ChildDoc: \(childId)")
         
         let ref = db.collection("users").document(parentId).collection("children").document(childId)
         
         childProfileListener = ref.addSnapshotListener { document, error in
-            // 2. Log any Permission or Network errors
             if let error = error {
                 print("DEBUG [TokenTime]: Firestore Error: \(error.localizedDescription)")
-                print("DEBUG [TokenTime]: Check if your Rules allow read access to this specific path.")
                 return
             }
             
-            // 3. Log document status
-            guard let document = document else {
-                print("DEBUG [TokenTime]: Document is nil")
+            guard let document = document, document.exists else {
+                print("DEBUG [TokenTime]: Document is nil or does not exist")
                 return
             }
             
-            if document.exists {
-                print("DEBUG [TokenTime]: Success! Document found. Decoding data...")
-                do {
-                    self.linkedChildProfile = try document.data(as: Child.self)
-                    print("DEBUG [TokenTime]: Child name is: \(self.linkedChildProfile?.name ?? "Unknown")")
-                } catch {
-                    print("DEBUG [TokenTime]: Decoding Error: Your Swift 'Child' model might not match your Firestore fields exactly. Error: \(error)")
-                }
-            } else {
-                print("DEBUG [TokenTime]: Document does not exist at this path. Verify IDs in your 'users' collection.")
+            do {
+                self.linkedChildProfile = try document.data(as: Child.self)
+            } catch {
+                print("DEBUG [TokenTime]: Decoding Error: \(error)")
             }
         }
     }
@@ -182,10 +189,10 @@ class ChildViewModel: ObservableObject {
     func signOut() {
         do {
             try Auth.auth().signOut()
-            // Clear all data
             self.children = []
             self.linkedChildProfile = nil
             self.isChildAccount = false
+            self.currentParentId = nil // Clear the parent ID
             self.invitationCode = nil
             self.errorMessage = nil
         } catch {
