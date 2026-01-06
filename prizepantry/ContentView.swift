@@ -1,7 +1,9 @@
 import SwiftUI
+import FamilyControls // Import needed for the picker
 
 struct ContentView: View {
     @StateObject var viewModel = ChildViewModel()
+    @StateObject var screenTimeManager = ScreenTimeManager.shared // Access ScreenTimeManager
     
     // Binding to control the app's root login state
     @Binding var isLoggedIn: Bool
@@ -9,6 +11,9 @@ struct ContentView: View {
     @State private var showingAddChildSheet = false
     @State private var newChildName = ""
     @State private var selectedChildForInvite: Child?
+    
+    // State for the Family Activity Picker
+    @State private var isPickerPresented = false
 
     var body: some View {
         // 1. CHECK MODE: If the user is linked as a child, show the read-only dashboard
@@ -19,7 +24,6 @@ struct ContentView: View {
             NavigationStack {
                 List {
                     // 2. CHECK MODE: If the parent has no children yet, show an option to join a family
-                    // This is helpful for testing the "Child" side on a fresh account.
                     if viewModel.children.isEmpty {
                         Section {
                              NavigationLink("Join an existing Family", destination: JoinFamilyView(viewModel: viewModel))
@@ -75,12 +79,21 @@ struct ContentView: View {
                 }
                 .navigationTitle("Prize Pantry")
                 .toolbar {
-                    // Top Left: Settings and Sign Out
+                    // Top Left: Settings, Sign Out, and Configure Apps
                     ToolbarItem(placement: .topBarLeading) {
                         HStack {
                             NavigationLink(destination: MachineSetupView(viewModel: viewModel)) {
                                 Image(systemName: "gear")
                             }
+                            
+                            // --- NEW: Configure Locked Apps Button ---
+                            Button {
+                                isPickerPresented = true
+                            } label: {
+                                Image(systemName: "lock.shield")
+                                    .foregroundStyle(.blue)
+                            }
+                            .padding(.leading, 8)
                             
                             Button(role: .destructive) {
                                 viewModel.signOut() // Clears Firebase session
@@ -98,6 +111,14 @@ struct ContentView: View {
                         Button { showingAddChildSheet = true } label: {
                             Label("Add Child", systemImage: "person.badge.plus")
                         }
+                    }
+                }
+                // --- FAMILY ACTIVITY PICKER (Moves config to Parent Side) ---
+                .familyActivityPicker(isPresented: $isPickerPresented, selection: $screenTimeManager.activitySelection)
+                .onChange(of: isPickerPresented) { _, isPresented in
+                    if !isPresented {
+                        // Save changes when the parent closes the picker
+                        screenTimeManager.saveSelectionAndLock()
                     }
                 }
                 // Sheet to show the 6-digit Invite Code

@@ -1,11 +1,9 @@
 import SwiftUI
-import FamilyControls
 
 struct ChildDashboardView: View {
     @ObservedObject var viewModel: ChildViewModel
     @StateObject var screenTimeManager = ScreenTimeManager.shared
     
-    @State private var isPickerPresented = false
     @State private var showUnlockAlert = false
     
     // Price Configuration
@@ -28,24 +26,6 @@ struct ChildDashboardView: View {
                 }
                 .padding()
                 
-                // --- LOCK SETUP (Ideally hidden or PIN protected in real app) ---
-                Button {
-                    isPickerPresented = true
-                } label: {
-                    HStack {
-                        Image(systemName: "lock.shield")
-                        Text("Configure Locked Apps")
-                    }
-                }
-                // The FamilyActivityPicker must be presented as a sheet
-                .familyActivityPicker(isPresented: $isPickerPresented, selection: $screenTimeManager.activitySelection)
-                // --- FIXED: Updated syntax for iOS 17+ ---
-                .onChange(of: isPickerPresented) { _, newValue in
-                    if !newValue {
-                        screenTimeManager.saveSelectionAndLock()
-                    }
-                }
-                
                 Divider()
                 
                 // --- BUY TIME INTERFACE ---
@@ -53,6 +33,7 @@ struct ChildDashboardView: View {
                     Text("Unlock Your Apps")
                         .font(.headline)
                     
+                    // Unlock Button
                     Button {
                         purchaseTime(minutes: 30, cost: costPer30Minutes)
                     } label: {
@@ -84,7 +65,8 @@ struct ChildDashboardView: View {
             .tint(.red)
         }
         .onAppear {
-            // Request permission as soon as the child dashboard loads
+            // Request permission as soon as the child dashboard loads.
+            // This is required for the Shield to activate on this device.
             screenTimeManager.requestAuthorization()
         }
         .alert("Success!", isPresented: $showUnlockAlert) {
@@ -99,6 +81,7 @@ struct ChildDashboardView: View {
         
         if child.tokenBalance >= cost {
             // 1. Deduct tokens via ViewModel (Firestore)
+            // This ensures the token count goes down by the specific cost
             viewModel.updateTokens(child: child, amount: child.tokenBalance - cost)
             
             // 2. Unlock Apps
