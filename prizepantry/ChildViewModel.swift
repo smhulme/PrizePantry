@@ -18,7 +18,7 @@ class ChildViewModel: ObservableObject {
     private var childrenListener: ListenerRegistration?
     private var childProfileListener: ListenerRegistration?
     
-    private var userId: String? {
+    private var userId: String?  {
         return Auth.auth().currentUser?.uid
     }
     
@@ -80,7 +80,7 @@ class ChildViewModel: ObservableObject {
         ])
     }
     
-    func deleteChild(at offsets: IndexSet) {
+    func deleteChild(at offsets:  IndexSet) {
         guard let uid = userId else { return }
         offsets.map { children[$0] }.forEach { child in
             if let id = child.id {
@@ -178,4 +178,19 @@ class ChildViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Authentication
+    func signOut() {
+        do {
+            try Auth.auth().signOut()
+            // Clear all data
+            self.children = []
+            self.linkedChildProfile = nil
+            self.isChildAccount = false
+            self.invitationCode = nil
+            self.errorMessage = nil
+        } catch {
+            print("Error signing out: \(error.localizedDescription)")
+            self.errorMessage = "Failed to sign out"
+        }
+    }
 }

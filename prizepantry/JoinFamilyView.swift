@@ -11,7 +11,7 @@ struct JoinFamilyView: View {
                 .foregroundStyle(.blue)
             
             Text("Join Your Family")
-                .font(.title)
+                .font(. title)
                 .bold()
             
             Text("Ask your parent for the 6-digit access code found in their app.")
@@ -20,13 +20,13 @@ struct JoinFamilyView: View {
                 .foregroundStyle(.secondary)
             
             TextField("Enter 6-digit Code", text: $codeInput)
-                .font(.title)
+                .font(. title)
                 .multilineTextAlignment(.center)
                 .keyboardType(.numberPad)
                 .padding()
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(10)
-                .padding(.horizontal)
+                .padding(. horizontal)
             
             if let error = viewModel.errorMessage {
                 Text(error).foregroundStyle(.red).font(.caption)
@@ -38,7 +38,7 @@ struct JoinFamilyView: View {
                 Text("Join Family")
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
+                    . background(Color.blue)
                     .foregroundColor(.white)
                     .cornerRadius(10)
             }
@@ -47,11 +47,12 @@ struct JoinFamilyView: View {
             
             Spacer()
             
-            // NEW SYNTAX: Direct function reference
-            // This is cleaner and less prone to syntax errors
-            Button("Sign Out", action: viewModel.signOut)
-                .tint(.red)
-                .buttonStyle(.bordered)
+            // Fixed:  Wrap the function call in a closure
+            Button("Sign Out") {
+                viewModel.signOut()
+            }
+            .tint(.red)
+            .buttonStyle(.bordered)
         }
         .padding()
     }
