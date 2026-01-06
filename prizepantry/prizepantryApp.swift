@@ -2,7 +2,7 @@
 //  prizepantryApp.swift
 //  prizepantry
 //
-//  Updated for Secure Auth
+//  Updated for Secure Auth and Reliable Sign Out
 //
 
 import SwiftUI
@@ -26,11 +26,19 @@ struct prizepantryApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if isLoggedIn || Auth.auth().currentUser != nil {
-                ContentView()
-                    // Pass the login state so ContentView can offer a "Sign Out" button if needed
-            } else {
-                LoginView(isLoggedIn: $isLoggedIn)
+            Group {
+                // Rely ONLY on this variable to decide which view to show
+                if isLoggedIn {
+                    ContentView(isLoggedIn: $isLoggedIn)
+                } else {
+                    LoginView(isLoggedIn: $isLoggedIn)
+                }
+            }
+            .onAppear {
+                // Check if user is already signed in ONLY when the app first appears
+                if Auth.auth().currentUser != nil {
+                    isLoggedIn = true
+                }
             }
         }
     }
