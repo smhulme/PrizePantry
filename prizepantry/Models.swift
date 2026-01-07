@@ -6,8 +6,11 @@ struct Child: Identifiable, Codable, Hashable {
     var name: String
     var tokenBalance: Int
     var rfidTag: String?
-    var linkedUserId: String? // <--- New: Stores the Child's Authentication UID
+    var linkedUserId: String?
     
+    var unlockCost: Int?      // Cost in tokens (default: 5)
+    var unlockDuration: Int?  // Duration in minutes (default: 30)
+
     static func == (lhs: Child, rhs: Child) -> Bool {
         return lhs.id == rhs.id
     }

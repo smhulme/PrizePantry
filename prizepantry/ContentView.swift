@@ -29,51 +29,55 @@ struct ContentView: View {
                             Text("If you are a child, enter the code provided by your parent.")
                         }
                     }
-
                     ForEach(viewModel.children) { child in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(child.name).font(.headline)
-                                Text("\(child.tokenBalance) Tokens")
-                                    .font(.subheadline).foregroundStyle(.secondary)
-                                
-                                if child.linkedUserId != nil {
-                                    Text("Linked")
-                                        .font(.caption)
-                                        .foregroundStyle(.green)
-                                }
-                            }
-                            Spacer()
-                            
-                            // Link Button (Key Icon) - Generates the 6-digit code
-                            Button {
-                                viewModel.generateInviteCode(for: child)
-                                selectedChildForInvite = child
-                            } label: {
-                                Image(systemName: "key.fill").foregroundStyle(.orange)
-                            }
-                            .buttonStyle(.borderless)
-                            .padding(.trailing, 10)
-                            
-                            // --- RESTORED: Token Controls ---
-                            Button {
-                                if child.tokenBalance > 0 {
-                                    viewModel.updateTokens(child: child, amount: child.tokenBalance - 1)
-                                }
-                            } label: {
-                                Image(systemName: "minus.circle").foregroundStyle(.red)
-                            }
-                            .buttonStyle(.borderless)
-                            
-                            Button {
-                                viewModel.updateTokens(child: child, amount: child.tokenBalance + 1)
-                            } label: {
-                                Image(systemName: "plus.circle.fill").foregroundStyle(.green)
-                            }
-                            .buttonStyle(.borderless)
-                            // --------------------------------
-                        }
-                    }
+                                            HStack {
+                                                VStack(alignment: .leading) {
+                                                    Text(child.name).font(.headline)
+                                                    Text("\(child.tokenBalance) Tokens")
+                                                        .font(.subheadline).foregroundStyle(.secondary)
+                                                    
+                                                    if child.linkedUserId != nil {
+                                                        Text("Linked").font(.caption).foregroundStyle(.green)
+                                                    }
+                                                }
+                                                
+                                                Spacer()
+                                                
+                                                // 1. SETTINGS BUTTON (NEW)
+                                                NavigationLink(destination: ChildSettingsView(viewModel: viewModel, child: child)) {
+                                                    Image(systemName: "slider.horizontal.3")
+                                                        .foregroundStyle(.blue)
+                                                        .padding(.trailing, 8)
+                                                }
+                                                
+                                                // 2. LINK BUTTON (Existing)
+                                                Button {
+                                                    viewModel.generateInviteCode(for: child)
+                                                    selectedChildForInvite = child
+                                                } label: {
+                                                    Image(systemName: "key.fill").foregroundStyle(.orange)
+                                                }
+                                                .buttonStyle(.borderless)
+                                                .padding(.trailing, 10)
+                                                
+                                                // 3. TOKEN CONTROLS (Existing)
+                                                Button {
+                                                    if child.tokenBalance > 0 {
+                                                        viewModel.updateTokens(child: child, amount: child.tokenBalance - 1)
+                                                    }
+                                                } label: {
+                                                    Image(systemName: "minus.circle").foregroundStyle(.red)
+                                                }
+                                                .buttonStyle(.borderless)
+                                                
+                                                Button {
+                                                    viewModel.updateTokens(child: child, amount: child.tokenBalance + 1)
+                                                } label: {
+                                                    Image(systemName: "plus.circle.fill").foregroundStyle(.green)
+                                                }
+                                                .buttonStyle(.borderless)
+                                            }
+                                        }
                     .onDelete(perform: viewModel.deleteChild)
                 }
                 .navigationTitle("Prize Pantry")

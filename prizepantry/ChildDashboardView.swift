@@ -13,32 +13,40 @@ struct ChildDashboardView: View {
     let costPer30Minutes = 5
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 30) {
-                if let child = viewModel.linkedChildProfile {
-                    HStack {
-                        Image(systemName: "person.crop.circle.fill").resizable().frame(width: 50, height: 50).foregroundStyle(.blue)
-                        VStack(alignment: .leading) {
-                            Text(child.name).font(.title2).bold()
-                            Text("\(child.tokenBalance) Tokens Available").foregroundStyle(.secondary)
+            NavigationStack {
+                VStack(spacing: 30) {
+                    if let child = viewModel.linkedChildProfile {
+                        // ✅ NEW: Calculate values dynamically
+                        let cost = child.unlockCost ?? 5
+                        let duration = child.unlockDuration ?? 30
+                        
+                        HStack {
+                            Image(systemName: "person.crop.circle.fill").resizable().frame(width: 50, height: 50).foregroundStyle(.blue)
+                            VStack(alignment: .leading) {
+                                Text(child.name).font(.title2).bold()
+                                Text("\(child.tokenBalance) Tokens Available").foregroundStyle(.secondary)
+                            }
+                            Spacer()
                         }
-                        Spacer()
-                    }
-                    .padding()
-                    
-                    VStack(spacing: 20) {
-                        Text("Unlock Your Apps").font(.headline)
-                        Button { purchaseTime(minutes: 30, cost: costPer30Minutes) } label: {
-                            Text("30 Minutes - \(costPer30Minutes) Tokens")
-                                .frame(maxWidth: .infinity).padding()
-                                .background(child.tokenBalance >= costPer30Minutes ? Color.green : Color.gray)
-                                .foregroundColor(.white).cornerRadius(12)
+                        .padding()
+                        
+                        VStack(spacing: 20) {
+                            Text("Unlock Your Apps").font(.headline)
+                            
+                            // ✅ UPDATED BUTTON
+                            Button {
+                                purchaseTime(minutes: duration, cost: cost)
+                            } label: {
+                                Text("\(duration) Minutes - \(cost) Tokens")
+                                    .frame(maxWidth: .infinity).padding()
+                                    .background(child.tokenBalance >= cost ? Color.green : Color.gray)
+                                    .foregroundColor(.white).cornerRadius(12)
+                            }
+                            .disabled(child.tokenBalance < cost)
                         }
-                        .disabled(child.tokenBalance < costPer30Minutes)
+                    } else {
+                        ProgressView("Loading Profile...")
                     }
-                } else {
-                    ProgressView("Loading Profile...")
-                }
                 
                 Spacer()
                 
@@ -69,10 +77,13 @@ struct ChildDashboardView: View {
     
     func purchaseTime(minutes: Int, cost: Int) {
         guard let child = viewModel.linkedChildProfile else { return }
+        
         if child.tokenBalance >= cost {
             viewModel.updateTokens(child: child, amount: child.tokenBalance - cost)
             screenTimeManager.unlockApps(forMinutes: minutes)
-            alertMessage = "Apps unlocked for 30 minutes!"; showAlert = true
+            
+            alertMessage = "Apps unlocked for \(minutes) minutes!"
+            showAlert = true
         }
     }
 }

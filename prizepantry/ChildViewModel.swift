@@ -194,4 +194,18 @@ class ChildViewModel: ObservableObject {
             print("Error signing out: \(error.localizedDescription)")
         }
     }
+    
+    // MARK: - Settings Logic
+    func updateChildSettings(child: Child, cost: Int, duration: Int) {
+        guard let uid = userId, let childId = child.id else { return }
+        
+        db.collection("users").document(uid).collection("children").document(childId).updateData([
+            "unlockCost": cost,
+            "unlockDuration": duration
+        ]) { error in
+            if let error = error {
+                print("Error updating settings: \(error.localizedDescription)")
+            }
+        }
+    }
 }
