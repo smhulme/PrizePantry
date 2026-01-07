@@ -3,8 +3,9 @@ import FamilyControls
 import ManagedSettings
 import DeviceActivity
 import SwiftUI
+import ActivityKit
 
-// Definitions must match exactly in the Extension
+// ✅ 1. ADD THESE EXTENSIONS BACK AT THE TOP
 extension DeviceActivityName {
     static let unlockSession = DeviceActivityName("unlockSession")
 }
@@ -13,29 +14,34 @@ extension ManagedSettingsStore.Name {
     static let lockedApps = ManagedSettingsStore.Name("lockedApps")
 }
 
+// ✅ 2. Your ScreenTimeManager Class
 class ScreenTimeManager: ObservableObject {
     static let shared = ScreenTimeManager()
     
     @Published var activitySelection = FamilyActivitySelection()
-    // Published property so Views can react to changes in the end time
     @Published var sessionEndTime: Date?
+    
+    // Settings for the Child
+    @AppStorage("enableLiveActivity", store: UserDefaults(suiteName: "group.com.prizepantry.tokentime"))
+    var enableLiveActivity: Bool = true
     
     private let store = ManagedSettingsStore(named: .lockedApps)
     private let center = DeviceActivityCenter()
     
-    // ⚠️ IMPORTANT: This must match the App Group ID in your entitlements exactly
+    // Activity State
+    private var currentActivity: Activity<PrizePantryActivityAttributes>?
+    
+    // ⚠️ Ensure this ID matches your App Group exactly
     let appGroupID = "group.com.prizepantry.tokentime"
     
     init() {
         let defaults = UserDefaults(suiteName: appGroupID)
         
-        // Load saved apps from the shared App Group
         if let data = defaults?.data(forKey: "SavedActivitySelection"),
            let selection = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) {
             self.activitySelection = selection
         }
         
-        // Load saved session end time (restore timer on app restart)
         if let savedTime = defaults?.object(forKey: "SessionEndTime") as? Date {
             if savedTime > Date() {
                 self.sessionEndTime = savedTime
@@ -54,7 +60,7 @@ class ScreenTimeManager: ObservableObject {
             }
         }
     }
-    
+
     func saveSelectionAndLock() {
         let defaults = UserDefaults(suiteName: appGroupID)
         if let data = try? JSONEncoder().encode(activitySelection) {
@@ -67,37 +73,32 @@ class ScreenTimeManager: ObservableObject {
         store.shield.applications = activitySelection.applicationTokens
         store.shield.applicationCategories = ShieldSettings.ActivityCategoryPolicy.specific(activitySelection.categoryTokens)
         store.shield.webDomains = activitySelection.webDomainTokens
-        print("🔒 Apps Locked")
+        
+        // Stop any running activity when we block apps
+        stopLiveActivity()
     }
     
-    // 3. The "Unlock" with Stacking Logic
     func unlockApps(forMinutes minutes: Int) {
         let defaults = UserDefaults(suiteName: appGroupID)
         let now = Date()
         
-        // A. Calculate new end time (Stacking Logic)
         var newEndTime: Date
-        
         if let currentEnd = sessionEndTime, currentEnd > now {
-            // If time remains, add to the EXISTING end time
             newEndTime = Calendar.current.date(byAdding: .minute, value: minutes, to: currentEnd)!
         } else {
-            // Otherwise, start from NOW
             newEndTime = Calendar.current.date(byAdding: .minute, value: minutes, to: now)!
         }
         
-        // Update State and Storage
         self.sessionEndTime = newEndTime
         defaults?.set(newEndTime, forKey: "SessionEndTime")
         
-        // B. Unlock immediately
         store.clearAllSettings()
-        print("🔓 Apps Unlocked until \(newEndTime)")
         
-        // C. Stop any existing timer so we can reschedule
+        // Start Live Activity
+        startLiveActivity(endTime: newEndTime)
+        
         center.stopMonitoring([.unlockSession])
         
-        // D. Create the schedule
         let schedule = DeviceActivitySchedule(
             intervalStart: Calendar.current.dateComponents([.hour, .minute, .second], from: now),
             intervalEnd: Calendar.current.dateComponents([.hour, .minute, .second], from: newEndTime),
@@ -105,11 +106,38 @@ class ScreenTimeManager: ObservableObject {
             warningTime: nil
         )
         
-        // Start monitoring. When this schedule ends, the Extension wakes up.
         do {
             try center.startMonitoring(.unlockSession, during: schedule)
         } catch {
             print("Failed to start monitoring: \(error)")
+        }
+    }
+    
+    // MARK: - Live Activity Logic
+    private func startLiveActivity(endTime: Date) {
+        guard enableLiveActivity, ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        
+        stopLiveActivity()
+        
+        let attributes = PrizePantryActivityAttributes(name: "Screen Time")
+        let state = PrizePantryActivityAttributes.ContentState(endTime: endTime)
+        
+        do {
+            currentActivity = try Activity.request(
+                attributes: attributes,
+                content: .init(state: state, staleDate: endTime),
+                pushType: nil
+            )
+        } catch {
+            print("Error starting Live Activity: \(error)")
+        }
+    }
+    
+    func stopLiveActivity() {
+        Task {
+            guard let activity = currentActivity else { return }
+            await activity.end(nil, dismissalPolicy: .immediate)
+            currentActivity = nil
         }
     }
 }

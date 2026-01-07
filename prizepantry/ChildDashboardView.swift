@@ -1,9 +1,12 @@
 import SwiftUI
+import FamilyControls // Ensure this is imported for familyActivityPicker
 
 struct ChildDashboardView: View {
     @ObservedObject var viewModel: ChildViewModel
     @StateObject var screenTimeManager = ScreenTimeManager.shared
     
+    // Sheet States
+    @State private var showSettingsSheet = false
     @State private var showAdminCodeAlert = false
     @State private var adminCodeInput = ""
     @State private var isPickerPresented = false
@@ -14,7 +17,6 @@ struct ChildDashboardView: View {
     @State private var timeRemaining: TimeInterval = 0
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
-    // ✅ NEW: Read settings directly from the child profile
     var currentCost: Int {
         viewModel.linkedChildProfile?.unlockCost ?? 5
     }
@@ -27,8 +29,12 @@ struct ChildDashboardView: View {
         NavigationStack {
             VStack(spacing: 30) {
                 if let child = viewModel.linkedChildProfile {
+                    // Profile Header
                     HStack {
-                        Image(systemName: "person.crop.circle.fill").resizable().frame(width: 50, height: 50).foregroundStyle(.blue)
+                        Image(systemName: "person.crop.circle.fill")
+                            .resizable()
+                            .frame(width: 50, height: 50)
+                            .foregroundStyle(.blue)
                         VStack(alignment: .leading) {
                             Text(child.name).font(.title2).bold()
                             Text("\(child.tokenBalance) Tokens Available").foregroundStyle(.secondary)
@@ -56,12 +62,11 @@ struct ChildDashboardView: View {
                             .foregroundStyle(.gray)
                             .padding()
                     }
-                    // ---------------------
                     
+                    // Unlock Buttons
                     VStack(spacing: 20) {
                         Text("Unlock Your Apps").font(.headline)
                         
-                        // ✅ Button uses dynamic Cost and Duration
                         Button {
                             purchaseTime(minutes: currentDuration, cost: currentCost)
                         } label: {
@@ -77,9 +82,60 @@ struct ChildDashboardView: View {
                 }
                 
                 Spacer()
-                
-                Button("Configure Blocked Apps") { showAdminCodeAlert = true }.font(.footnote).foregroundStyle(.gray)
-                Button("Sign Out") { viewModel.signOut() }.tint(.red)
+            }
+            .navigationTitle("Dashboard") // Add a title for the toolbar to look correct
+            .navigationBarTitleDisplayMode(.inline)
+            // ---------------------------------------------------------
+            // 1. ADD TOOLBAR WITH SETTINGS ICON
+            // ---------------------------------------------------------
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: { showSettingsSheet = true }) {
+                        Image(systemName: "gearshape.fill")
+                            .foregroundStyle(.blue)
+                    }
+                }
+            }
+            // ---------------------------------------------------------
+            // 2. ADD SETTINGS SHEET
+            // ---------------------------------------------------------
+            .sheet(isPresented: $showSettingsSheet) {
+                NavigationStack {
+                    Form {
+                        Section("Preferences") {
+                            // The Toggle handles the user default binding directly via ScreenTimeManager
+                            Toggle("Show Timer on Dynamic Island", isOn: $screenTimeManager.enableLiveActivity)
+                                .tint(.blue)
+                            
+                            Text("When enabled, a timer will appear in the Dynamic Island and on the Lock Screen while your apps are unlocked.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        Section("Account") {
+                            Button("Configure Blocked Apps") {
+                                showSettingsSheet = false // Close settings first
+                                // Slight delay to allow sheet dismissal animation
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    showAdminCodeAlert = true
+                                }
+                            }
+                            
+                            Button("Sign Out") {
+                                showSettingsSheet = false
+                                viewModel.signOut()
+                            }
+                            .foregroundStyle(.red)
+                        }
+                    }
+                    .navigationTitle("Settings")
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { showSettingsSheet = false }
+                        }
+                    }
+                }
+                .presentationDetents([.medium])
             }
             .onAppear {
                 screenTimeManager.requestAuthorization()
@@ -88,11 +144,13 @@ struct ChildDashboardView: View {
             .onReceive(timer) { _ in
                 updateTimer()
             }
+            // Admin Code Alert (Triggered from Settings or directly if you kept the button)
             .alert("Parent Access", isPresented: $showAdminCodeAlert) {
                 TextField("6-digit Code", text: $adminCodeInput).keyboardType(.numberPad)
                 Button("Verify") { verifyCode() }
                 Button("Cancel", role: .cancel) { }
             }
+            // Family Activity Picker
             .familyActivityPicker(isPresented: $isPickerPresented, selection: $screenTimeManager.activitySelection)
             .onChange(of: isPickerPresented) { _, isPresented in
                 if !isPresented { screenTimeManager.saveSelectionAndLock() }
@@ -101,7 +159,7 @@ struct ChildDashboardView: View {
         }
     }
     
-    // Timer Helper
+    // ... Existing helper functions (updateTimer, formatTime, verifyCode, purchaseTime) ...
     func updateTimer() {
         if let endTime = screenTimeManager.sessionEndTime {
             let remaining = endTime.timeIntervalSinceNow
