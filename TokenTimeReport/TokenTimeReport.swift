@@ -3,63 +3,65 @@ import DeviceActivity
 import SwiftUI
 import FamilyControls
 
-extension DeviceActivityReport.Context {
-    // Create a unique name for this report
-    static let timeRemaining = Self("TimeRemaining")
-}
-
-struct TokenTimeReport: DeviceActivityReportScene {
-    // Define the context we created above
-    let context: DeviceActivityReport.Context = .timeRemaining
-    
-    // Define the content (The View)
-    let content: (String) -> TimeRemainingView
-    
-    // Configure the data we want to fetch
-    func makeConfiguration(representing date: Date) async -> DeviceActivityReportConfiguration {
-        let appGroupID = "group.com.prizepantry.tokentime"
-        let defaults = UserDefaults(suiteName: appGroupID)
-        
-        // 1. Fetch the saved selection from the Main App
-        var activitySelection = FamilyActivitySelection()
-        if let data = defaults?.data(forKey: "SavedActivitySelection"),
-           let selection = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) {
-            activitySelection = selection
-        }
-        
-        // 2. Define the scope (Today)
-        let startOfDay = Calendar.current.startOfDay(for: Date())
-        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
-        let dateInterval = DateInterval(start: startOfDay, end: endOfDay)
-        
-        // 3. Create Filter (Only show usage for the apps we blocked)
-        let filter = DeviceActivityFilter(
-            segment: .daily(during: dateInterval),
-            users: .all,
-            devices: .init([.iPhone, .iPad]),
-            applications: activitySelection.applicationTokens,
-            categories: activitySelection.categoryTokens,
-            webDomains: activitySelection.webDomainTokens
-        )
-        
-        return DeviceActivityReportConfiguration(title: "Time Remaining", filter: filter)
+// 1. Define the custom model structure
+extension DeviceActivityReport {
+    struct ApplicationActivity: Identifiable {
+        let id: String
+        let displayName: String
+        let appID: String?
+        let totalActivityDuration: TimeInterval
+        let activities: [ApplicationActivity]
     }
 }
 
-// The SwiftUI View that draws the usage
+// 2. The @main entry point for the extension
+@main
+struct TokenTimeReport: DeviceActivityReportScene {
+    // Define the context (Must match the one in DeviceActivityConstants.swift)
+    let context: DeviceActivityReport.Context = .timeRemaining
+    
+    // Define the content closure
+    let content: (DeviceActivityReport.ApplicationActivity) -> TimeRemainingView
+    
+    // 3. Configure the data to display
+    func makeConfiguration(representing data: DeviceActivityResults<DeviceActivityData>) async -> DeviceActivityReport.ApplicationActivity {
+        var totalDuration: TimeInterval = 0
+        
+        // Outer loop is async (iterating over devices/users)
+        for await activity in data {
+            // FIX: Inner loop is ALSO async. You must use 'for await' here too.
+            for await segment in activity.activitySegments {
+                totalDuration += segment.totalActivityDuration
+            }
+        }
+        
+        // Return our custom model to the view
+        return DeviceActivityReport.ApplicationActivity(
+            id: "root",
+            displayName: "Total",
+            appID: nil,
+            totalActivityDuration: totalDuration,
+            activities: []
+        )
+    }
+}
+
+// 4. The SwiftUI View that draws the usage
 struct TimeRemainingView: View {
     let appGroupID = "group.com.prizepantry.tokentime"
+    
+    // This view receives the data model created in makeConfiguration above
     var activityReport: DeviceActivityReport.ApplicationActivity
     
     var body: some View {
         let defaults = UserDefaults(suiteName: appGroupID)
         let limit = defaults?.integer(forKey: "cumulativeAllowance") ?? 0
         
-        // Calculate total duration used today for the selected apps
-        let totalUsage = activityReport.totalDuration
+        // Get total usage from the passed report
+        let totalUsage = activityReport.totalActivityDuration
         let usageMinutes = Int(totalUsage / 60)
         
-        // Calculate remaining
+        // Calculate remaining time
         let remaining = max(0, limit - usageMinutes)
         
         HStack {
@@ -84,7 +86,7 @@ struct TimeRemainingView: View {
             }
             Spacer()
             
-            // Circular Progress
+            // Circular Progress Indicator
             ZStack {
                 Circle()
                     .stroke(lineWidth: 8)
@@ -102,17 +104,5 @@ struct TimeRemainingView: View {
         .padding()
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(16)
-    }
-}
-
-// Helper to sum up duration from the results
-extension DeviceActivityReport.ApplicationActivity {
-    var totalDuration: TimeInterval {
-        // Simple recursive sum of all activities in the tree
-        var duration: TimeInterval = 0
-        for activity in self.activities {
-            duration += activity.totalActivityDuration
-        }
-        return duration
     }
 }

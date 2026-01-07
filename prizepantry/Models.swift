@@ -42,6 +42,4 @@ struct RemoteCommand: Codable, Identifiable {
     var createdAt: Date
 }
 
-extension DeviceActivityReport.Context {
-    static let timeRemaining = Self("TimeRemaining")
-}
+
