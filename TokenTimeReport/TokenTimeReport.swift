@@ -1,4 +1,4 @@
-// File: TokenTimeReport/TokenTimeReport.swift
+// File: TokenTimeReport/TokenTimeReport. swift
 import DeviceActivity
 import SwiftUI
 import FamilyControls
@@ -8,25 +8,22 @@ extension DeviceActivityReport {
     struct ApplicationActivity: Identifiable {
         let id: String
         let displayName: String
-        let appID: String?
+        let appID:  String?
         let totalActivityDuration: TimeInterval
         let activities: [ApplicationActivity]
     }
 }
 
 // 2. The @main entry point for the extension
-// This struct must conform to DeviceActivityReportExtension, NOT DeviceActivityReportScene
 @main
 struct TokenTimeReportExtension: DeviceActivityReportExtension {
-    var body: some DeviceActivityReportScene {
-        // Define the scenes your extension supports
-        
+    var body:  some DeviceActivityReportScene {
         // Scene 1: Token Time (Time Remaining)
         TokenTimeReport { activity in
             TimeRemainingView(activityReport: activity)
         }
         
-        // Scene 2: Total Activity (from TotalActivityReport.swift)
+        // Scene 2: Total Activity
         TotalActivityReport { totalActivity in
             TotalActivityView(totalActivity: totalActivity)
         }
@@ -34,26 +31,25 @@ struct TokenTimeReportExtension: DeviceActivityReportExtension {
 }
 
 // 3. The Report Scene Configuration
-struct TokenTimeReport: DeviceActivityReportScene {
-    // Define the context (Must match the one in DeviceActivityConstants.swift)
+struct TokenTimeReport:  DeviceActivityReportScene {
     let context: DeviceActivityReport.Context = .timeRemaining
-    
-    // Define the content closure
     let content: (DeviceActivityReport.ApplicationActivity) -> TimeRemainingView
     
-    // 4. Configure the data to display
+    // ✅ FIXED: Only count usage for the filtered apps
     func makeConfiguration(representing data: DeviceActivityResults<DeviceActivityData>) async -> DeviceActivityReport.ApplicationActivity {
-        var totalDuration: TimeInterval = 0
+        var totalDuration:  TimeInterval = 0
         
-        // Outer loop is async (iterating over devices/users)
+        // The data is already filtered by the DeviceActivityFilter passed from ChildDashboardView
+        // So we can safely sum all segments here
         for await activity in data {
-            // FIX: Inner loop is ALSO async. You must use 'for await' here too.
             for await segment in activity.activitySegments {
-                totalDuration += segment.totalActivityDuration
+                // Sum up all app activities in this segment
+                for await appActivity in segment.categories {
+                    totalDuration += appActivity.totalActivityDuration
+                }
             }
         }
         
-        // Return our custom model to the view
         return DeviceActivityReport.ApplicationActivity(
             id: "root",
             displayName: "Total",
@@ -64,25 +60,25 @@ struct TokenTimeReport: DeviceActivityReportScene {
     }
 }
 
-// 5. The SwiftUI View that draws the usage
+// 5. The SwiftUI View
 struct TimeRemainingView: View {
     let appGroupID = "group.com.prizepantry.tokentime"
-    
-    // This view receives the data model created in makeConfiguration above
     var activityReport: DeviceActivityReport.ApplicationActivity
     
     var body: some View {
+        // ✅ MOVED: Calculate everything outside the view builder
         let defaults = UserDefaults(suiteName: appGroupID)
         let limit = defaults?.integer(forKey: "cumulativeAllowance") ?? 0
         
-        // Get total usage from the passed report
+        // Get total usage from the passed report (in seconds)
         let totalUsage = activityReport.totalActivityDuration
         let usageMinutes = Int(totalUsage / 60)
         
         // Calculate remaining time
         let remaining = max(0, limit - usageMinutes)
         
-        HStack {
+        // ✅ Use onAppear for debugging instead of direct print
+        return HStack {
             VStack(alignment: .leading) {
                 Text("Time Remaining")
                     .font(.caption)
@@ -90,15 +86,15 @@ struct TimeRemainingView: View {
                 
                 if limit == 0 {
                     Text("No Time Bought")
-                        .font(.headline)
-                        .foregroundStyle(.red)
+                        . font(.headline)
+                        . foregroundStyle(.red)
                 } else if remaining == 0 {
                     Text("Time's Up!")
-                        .font(.headline)
+                        .font(. headline)
                         .foregroundStyle(.red)
                 } else {
                     Text("\(remaining) mins")
-                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .font(.system(size: 34, weight: .bold, design: . rounded))
                         .foregroundStyle(.blue)
                 }
             }
@@ -114,7 +110,7 @@ struct TimeRemainingView: View {
                 Circle()
                     .trim(from: 0.0, to: limit > 0 ? CGFloat(remaining) / CGFloat(limit) : 0)
                     .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round, lineJoin: .round))
-                    .foregroundColor(remaining < 5 ? .red : .blue)
+                    .foregroundColor(remaining < 5 ? .red : . blue)
                     .rotationEffect(Angle(degrees: 270.0))
             }
             .frame(width: 50, height: 50)
@@ -122,5 +118,9 @@ struct TimeRemainingView: View {
         .padding()
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(16)
+        .onAppear {
+            // ✅ Debugging moved here
+            print("📊 Report Update - Limit: \(limit)m, Used: \(usageMinutes)m, Remaining: \(remaining)m")
+        }
     }
 }

@@ -15,21 +15,24 @@ struct ChildDashboardView: View {
     @State private var context: DeviceActivityReport.Context = .timeRemaining
     @State private var filter = DeviceActivityFilter(
         segment: .daily(during: DateInterval(start: Calendar.current.startOfDay(for: Date()), end: Date())),
-        users: .all,
-        devices: .init([.iPhone, .iPad])
+        users: . all,
+        devices: .init([. iPhone, .iPad])
     )
+    
+    // ✅ ADD THIS: Key to force report refresh
+    @State private var reportRefreshKey = UUID()
     
     var currentCost: Int { viewModel.linkedChildProfile?.unlockCost ?? 5 }
     var currentDuration: Int { viewModel.linkedChildProfile?.unlockDuration ?? 30 }
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 30) {
+            VStack(spacing:  30) {
                 if let child = viewModel.linkedChildProfile {
                     // Profile Header
                     HStack {
                         Image(systemName: "person.crop.circle.fill")
-                            .resizable().frame(width: 50, height: 50).foregroundStyle(.blue)
+                            .resizable().frame(width: 50, height:  50).foregroundStyle(.blue)
                         VStack(alignment: .leading) {
                             Text(child.name).font(.title2).bold()
                             Text("\(child.tokenBalance) Tokens").foregroundStyle(.secondary)
@@ -41,14 +44,15 @@ struct ChildDashboardView: View {
                     // ✅ UPDATED: Usage Limit Status using the Live Report Extension
                     VStack(spacing: 10) {
                         if screenTimeManager.cumulativeAllowance > 0 {
-                            // This renders the view defined in your Report Extension
+                            // ✅ ADD . id() modifier to force refresh
                             DeviceActivityReport(context, filter: filter)
                                 .frame(height: 120)
+                                .id(reportRefreshKey) // Force refresh when this changes
                         } else {
                             // Empty state when no time is active
-                            VStack(spacing: 8) {
+                            VStack(spacing:  8) {
                                 Text("Apps Locked")
-                                    .font(.headline)
+                                    .font(. headline)
                                     .foregroundStyle(.red)
                                 Text("Spend tokens to unlock your apps.")
                                     .font(.subheadline)
@@ -60,7 +64,7 @@ struct ChildDashboardView: View {
                             .cornerRadius(15)
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(. horizontal)
                     
                     // Interaction Section
                     VStack(spacing: 20) {
@@ -74,16 +78,16 @@ struct ChildDashboardView: View {
                                     .font(.caption)
                             }
                             .frame(maxWidth: .infinity).padding()
-                            .background(child.tokenBalance >= currentCost ? Color.blue : Color.gray)
+                            .background(child.tokenBalance >= currentCost ?  Color.blue : Color.gray)
                             .foregroundColor(.white).cornerRadius(12)
                         }
                         .disabled(child.tokenBalance < currentCost)
                         
-                        Text("Time stacks! Adding more extends your daily limit.")
-                            .font(.caption)
+                        Text("Time stacks!  Adding more extends your daily limit.")
+                            .font(. caption)
                             .foregroundStyle(.secondary)
                     }
-                    .padding(.horizontal)
+                    .padding(. horizontal)
                 } else {
                     ProgressView("Loading Profile...")
                 }
@@ -111,7 +115,8 @@ struct ChildDashboardView: View {
             .onChange(of: isPickerPresented) { _, isPresented in
                 if !isPresented {
                     screenTimeManager.saveSelectionAndLock()
-                    updateReportFilter() // Refresh report with new app selection
+                    updateReportFilter()
+                    reportRefreshKey = UUID() // ✅ Refresh report
                 }
             }
             .alert(alertMessage, isPresented: $showAlert) { Button("OK", role: .cancel) { } }
@@ -124,12 +129,12 @@ struct ChildDashboardView: View {
     func updateReportFilter() {
         let now = Date()
         let startOfDay = Calendar.current.startOfDay(for: now)
-        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to:  startOfDay)!
         
         filter = DeviceActivityFilter(
             segment: .daily(during: DateInterval(start: startOfDay, end: endOfDay)),
             users: .all,
-            devices: .init([.iPhone, .iPad]),
+            devices: .init([.iPhone, . iPad]),
             applications: screenTimeManager.activitySelection.applicationTokens,
             categories: screenTimeManager.activitySelection.categoryTokens,
             webDomains: screenTimeManager.activitySelection.webDomainTokens
@@ -148,8 +153,14 @@ struct ChildDashboardView: View {
         guard let child = viewModel.linkedChildProfile else { return }
         if child.tokenBalance >= cost {
             viewModel.updateTokens(child: child, amount: child.tokenBalance - cost)
-            // Adds to the usage-based allowance
+            
+            // Add the time
             screenTimeManager.addTime(minutes: minutes)
+            
+            // ✅ Force the report to refresh immediately
+            reportRefreshKey = UUID()
+            
+            // ✅ Optional: Also update the filter to ensure it's current
             updateReportFilter()
         }
     }
