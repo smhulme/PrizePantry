@@ -8,9 +8,10 @@ struct Child: Identifiable, Codable, Hashable {
     var rfidTag: String?
     var linkedUserId: String?
     
-    var unlockCost: Int?      // Cost in tokens (default: 5)
-    var unlockDuration: Int?  // Duration in minutes (default: 30)
-
+    // ✅ These must exist for ChildSettingsView to access them
+    var unlockCost: Int?
+    var unlockDuration: Int?
+    
     static func == (lhs: Child, rhs: Child) -> Bool {
         return lhs.id == rhs.id
     }
@@ -20,15 +21,13 @@ struct Child: Identifiable, Codable, Hashable {
     }
 }
 
-// New struct for the global "invitations" collection
 struct Invitation: Codable {
-    @DocumentID var id: String? // The 6-digit code
+    @DocumentID var id: String?
     var parentId: String
     var childId: String
     var createdAt: Date
 }
 
-// New struct to store on the User's profile to know if they are a Child
 struct UserProfile: Codable {
     @DocumentID var id: String?
     var linkedParentId: String?

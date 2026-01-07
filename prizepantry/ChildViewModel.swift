@@ -12,7 +12,7 @@ class ChildViewModel: ObservableObject {
     
     // UI State
     @Published var invitationCode: String?
-    @Published var settingsUnlockCode: String? // NEW: For admin configuration
+    @Published var settingsUnlockCode: String?
     @Published var errorMessage: String?
     
     // Internal State
@@ -77,14 +77,23 @@ class ChildViewModel: ObservableObject {
         try? db.collection("users").document(uid).collection("children").addDocument(from: newChild)
     }
     
+    // ✅ FIXED: Now accepts explicit cost and duration arguments to match your View
+    func updateChildSettings(child: Child, cost: Int, duration: Int) {
+        guard let uid = userId, let childId = child.id else { return }
+        
+        let data: [String: Any] = [
+            "unlockCost": cost,
+            "unlockDuration": duration
+        ]
+        
+        db.collection("users").document(uid).collection("children").document(childId).updateData(data)
+    }
+    
     // MARK: - Shared / Token Logic
     func updateTokens(child: Child, amount: Int) {
         let targetUid = isChildAccount ? currentParentId : userId
         
-        guard let uid = targetUid, let childId = child.id else {
-            print("Error: Could not determine document path.")
-            return
-        }
+        guard let uid = targetUid, let childId = child.id else { return }
         
         db.collection("users").document(uid).collection("children").document(childId).updateData([
             "tokenBalance": amount
@@ -105,7 +114,7 @@ class ChildViewModel: ObservableObject {
         db.collection("users").document(uid).collection("children").document(childId).updateData(["rfidTag": tagID])
     }
     
-    // MARK: - Admin Access (NEW)
+    // MARK: - Admin Access
     func generateSettingsUnlockCode() {
         let code = String(Int.random(in: 100000...999999))
         let data: [String: Any] = [
@@ -126,7 +135,7 @@ class ChildViewModel: ObservableObject {
         let docRef = db.collection("unlock_codes").document(code)
         docRef.getDocument { document, _ in
             if let document = document, document.exists {
-                docRef.delete() // One-time use
+                docRef.delete()
                 completion(true)
             } else {
                 completion(false)
@@ -192,20 +201,6 @@ class ChildViewModel: ObservableObject {
             self.errorMessage = nil
         } catch {
             print("Error signing out: \(error.localizedDescription)")
-        }
-    }
-    
-    // MARK: - Settings Logic
-    func updateChildSettings(child: Child, cost: Int, duration: Int) {
-        guard let uid = userId, let childId = child.id else { return }
-        
-        db.collection("users").document(uid).collection("children").document(childId).updateData([
-            "unlockCost": cost,
-            "unlockDuration": duration
-        ]) { error in
-            if let error = error {
-                print("Error updating settings: \(error.localizedDescription)")
-            }
         }
     }
 }

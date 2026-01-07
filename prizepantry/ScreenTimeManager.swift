@@ -1,4 +1,3 @@
-// File: prizepantry/ScreenTimeManager.swift
 import Foundation
 import FamilyControls
 import ManagedSettings
@@ -18,6 +17,8 @@ class ScreenTimeManager: ObservableObject {
     static let shared = ScreenTimeManager()
     
     @Published var activitySelection = FamilyActivitySelection()
+    // Published property so Views can react to changes in the end time
+    @Published var sessionEndTime: Date?
     
     private let store = ManagedSettingsStore(named: .lockedApps)
     private let center = DeviceActivityCenter()
@@ -26,15 +27,24 @@ class ScreenTimeManager: ObservableObject {
     let appGroupID = "group.com.prizepantry.tokentime"
     
     init() {
-        // Load saved apps from the shared App Group so we remember what to block
         let defaults = UserDefaults(suiteName: appGroupID)
+        
+        // Load saved apps from the shared App Group
         if let data = defaults?.data(forKey: "SavedActivitySelection"),
            let selection = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) {
             self.activitySelection = selection
         }
+        
+        // Load saved session end time (restore timer on app restart)
+        if let savedTime = defaults?.object(forKey: "SessionEndTime") as? Date {
+            if savedTime > Date() {
+                self.sessionEndTime = savedTime
+            } else {
+                self.sessionEndTime = nil
+            }
+        }
     }
     
-    // 1. Permission (Required to see the picker)
     func requestAuthorization() {
         Task {
             do {
@@ -45,44 +55,52 @@ class ScreenTimeManager: ObservableObject {
         }
     }
     
-    // 2. The "Default State": Save the list and BLOCK immediately
     func saveSelectionAndLock() {
-        // A. Save to App Group (so the Extension can see it later)
         let defaults = UserDefaults(suiteName: appGroupID)
         if let data = try? JSONEncoder().encode(activitySelection) {
             defaults?.set(data, forKey: "SavedActivitySelection")
         }
-        
-        // B. Block Immediately
         blockApps()
     }
     
-    // Helper to apply the shield
     func blockApps() {
-        // Use the tokens directly to shield applications
         store.shield.applications = activitySelection.applicationTokens
         store.shield.applicationCategories = ShieldSettings.ActivityCategoryPolicy.specific(activitySelection.categoryTokens)
         store.shield.webDomains = activitySelection.webDomainTokens
         print("🔒 Apps Locked")
     }
     
-    // 3. The "Unlock": Clear shields and set a timer to re-lock
+    // 3. The "Unlock" with Stacking Logic
     func unlockApps(forMinutes minutes: Int) {
-        // A. Unlock immediately
-        store.clearAllSettings()
-        print("🔓 Apps Unlocked for \(minutes) minutes")
+        let defaults = UserDefaults(suiteName: appGroupID)
+        let now = Date()
         
-        // B. Stop any existing timer (if they buy time twice, reset the clock)
+        // A. Calculate new end time (Stacking Logic)
+        var newEndTime: Date
+        
+        if let currentEnd = sessionEndTime, currentEnd > now {
+            // If time remains, add to the EXISTING end time
+            newEndTime = Calendar.current.date(byAdding: .minute, value: minutes, to: currentEnd)!
+        } else {
+            // Otherwise, start from NOW
+            newEndTime = Calendar.current.date(byAdding: .minute, value: minutes, to: now)!
+        }
+        
+        // Update State and Storage
+        self.sessionEndTime = newEndTime
+        defaults?.set(newEndTime, forKey: "SessionEndTime")
+        
+        // B. Unlock immediately
+        store.clearAllSettings()
+        print("🔓 Apps Unlocked until \(newEndTime)")
+        
+        // C. Stop any existing timer so we can reschedule
         center.stopMonitoring([.unlockSession])
         
-        // C. Schedule the "Time's Up" event
-        let now = Date()
-        let end = Calendar.current.date(byAdding: .minute, value: minutes, to: now)!
-        
-        // Create the schedule
+        // D. Create the schedule
         let schedule = DeviceActivitySchedule(
             intervalStart: Calendar.current.dateComponents([.hour, .minute, .second], from: now),
-            intervalEnd: Calendar.current.dateComponents([.hour, .minute, .second], from: end),
+            intervalEnd: Calendar.current.dateComponents([.hour, .minute, .second], from: newEndTime),
             repeats: false,
             warningTime: nil
         )
