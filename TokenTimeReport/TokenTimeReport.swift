@@ -15,7 +15,25 @@ extension DeviceActivityReport {
 }
 
 // 2. The @main entry point for the extension
+// This struct must conform to DeviceActivityReportExtension, NOT DeviceActivityReportScene
 @main
+struct TokenTimeReportExtension: DeviceActivityReportExtension {
+    var body: some DeviceActivityReportScene {
+        // Define the scenes your extension supports
+        
+        // Scene 1: Token Time (Time Remaining)
+        TokenTimeReport { activity in
+            TimeRemainingView(activityReport: activity)
+        }
+        
+        // Scene 2: Total Activity (from TotalActivityReport.swift)
+        TotalActivityReport { totalActivity in
+            TotalActivityView(totalActivity: totalActivity)
+        }
+    }
+}
+
+// 3. The Report Scene Configuration
 struct TokenTimeReport: DeviceActivityReportScene {
     // Define the context (Must match the one in DeviceActivityConstants.swift)
     let context: DeviceActivityReport.Context = .timeRemaining
@@ -23,7 +41,7 @@ struct TokenTimeReport: DeviceActivityReportScene {
     // Define the content closure
     let content: (DeviceActivityReport.ApplicationActivity) -> TimeRemainingView
     
-    // 3. Configure the data to display
+    // 4. Configure the data to display
     func makeConfiguration(representing data: DeviceActivityResults<DeviceActivityData>) async -> DeviceActivityReport.ApplicationActivity {
         var totalDuration: TimeInterval = 0
         
@@ -46,7 +64,7 @@ struct TokenTimeReport: DeviceActivityReportScene {
     }
 }
 
-// 4. The SwiftUI View that draws the usage
+// 5. The SwiftUI View that draws the usage
 struct TimeRemainingView: View {
     let appGroupID = "group.com.prizepantry.tokentime"
     
