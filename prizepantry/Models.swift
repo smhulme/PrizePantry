@@ -1,5 +1,7 @@
 import Foundation
+import _DeviceActivity_SwiftUI
 import FirebaseFirestore
+import DeviceActivity
 
 struct Child: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
@@ -8,7 +10,6 @@ struct Child: Identifiable, Codable, Hashable {
     var rfidTag: String?
     var linkedUserId: String?
     
-    // ✅ These must exist for ChildSettingsView to access them
     var unlockCost: Int?
     var unlockDuration: Int?
     
@@ -32,4 +33,15 @@ struct UserProfile: Codable {
     @DocumentID var id: String?
     var linkedParentId: String?
     var linkedChildId: String?
+}
+
+// ✅ NEW: Command structure for Parent -> Child control
+struct RemoteCommand: Codable, Identifiable {
+    @DocumentID var id: String?
+    var type: String // e.g., "lockNow"
+    var createdAt: Date
+}
+
+extension DeviceActivityReport.Context {
+    static let timeRemaining = Self("TimeRemaining")
 }

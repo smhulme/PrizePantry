@@ -18,6 +18,9 @@
 		2CDAB51F2F0EBDEB00376B93 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CDAB51E2F0EBDEB00376B93 /* WidgetKit.framework */; };
 		2CDAB5212F0EBDEB00376B93 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CDAB5202F0EBDEB00376B93 /* SwiftUI.framework */; };
 		2CDAB5322F0EBDED00376B93 /* PrizePantryWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2CDAB51D2F0EBDEB00376B93 /* PrizePantryWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2CDAB54D2F0F09FA00376B93 /* TokenTimeReport.appex in Embed ExtensionKit Extensions */ = {isa = PBXBuildFile; fileRef = 2CDAB5412F0F09FA00376B93 /* TokenTimeReport.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2CDAB5582F0F0C9700376B93 /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CDAB5572F0F0C9700376B93 /* DeviceActivity.framework */; platformFilters = (ios, macos, ); };
+		2CDAB5592F0F0CD300376B93 /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CDAB5572F0F0C9700376B93 /* DeviceActivity.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +52,13 @@
 			remoteGlobalIDString = 2CDAB51C2F0EBDEB00376B93;
 			remoteInfo = PrizePantryWidgetsExtension;
 		};
+		2CDAB54B2F0F09FA00376B93 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2CDAB4742F03B74A00376B93 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2CDAB5402F0F09FA00376B93;
+			remoteInfo = TokenTimeReport;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -62,6 +72,17 @@
 				2CDAB5322F0EBDED00376B93 /* PrizePantryWidgetsExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2CDAB5522F0F09FA00376B93 /* Embed ExtensionKit Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(EXTENSIONS_FOLDER_PATH)";
+			dstSubfolderSpec = 16;
+			files = (
+				2CDAB54D2F0F09FA00376B93 /* TokenTimeReport.appex in Embed ExtensionKit Extensions */,
+			);
+			name = "Embed ExtensionKit Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -78,6 +99,8 @@
 		2CDAB51D2F0EBDEB00376B93 /* PrizePantryWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PrizePantryWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CDAB51E2F0EBDEB00376B93 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		2CDAB5202F0EBDEB00376B93 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		2CDAB5412F0F09FA00376B93 /* TokenTimeReport.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = TokenTimeReport.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		2CDAB5572F0F0C9700376B93 /* DeviceActivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DeviceActivity.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/DeviceActivity.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -109,6 +132,20 @@
 			);
 			target = 2CDAB51C2F0EBDEB00376B93 /* PrizePantryWidgetsExtension */;
 		};
+		2CDAB5512F0F09FA00376B93 /* Exceptions for "TokenTimeReport" folder in "TokenTimeReport" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2CDAB5402F0F09FA00376B93 /* TokenTimeReport */;
+		};
+		2CDAB5562F0F0B9F00376B93 /* Exceptions for "prizepantry" folder in "TokenTimeReport" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				DeviceActivityConstants.swift,
+			);
+			target = 2CDAB5402F0F09FA00376B93 /* TokenTimeReport */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -117,6 +154,7 @@
 			exceptions = (
 				2CDAB5382F0EFC2100376B93 /* Exceptions for "prizepantry" folder in "prizepantry" target */,
 				2CDAB53C2F0EFEE800376B93 /* Exceptions for "prizepantry" folder in "PrizePantryWidgetsExtension" target */,
+				2CDAB5562F0F0B9F00376B93 /* Exceptions for "prizepantry" folder in "TokenTimeReport" target */,
 			);
 			path = prizepantry;
 			sourceTree = "<group>";
@@ -147,6 +185,14 @@
 			path = PrizePantryWidgets;
 			sourceTree = "<group>";
 		};
+		2CDAB5422F0F09FA00376B93 /* TokenTimeReport */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				2CDAB5512F0F09FA00376B93 /* Exceptions for "TokenTimeReport" folder in "TokenTimeReport" target */,
+			);
+			path = TokenTimeReport;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -159,6 +205,7 @@
 				2CDAB4BE2F06231C00376B93 /* AuthenticationServices.framework in Frameworks */,
 				2CDAB4B12F0450D600376B93 /* FirebaseFirestore in Frameworks */,
 				2CDAB4B32F0450D600376B93 /* FirebaseFirestoreCombine-Community in Frameworks */,
+				2CDAB5592F0F0CD300376B93 /* DeviceActivity.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -193,6 +240,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2CDAB53E2F0F09FA00376B93 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2CDAB5582F0F0C9700376B93 /* DeviceActivity.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -205,6 +260,7 @@
 				2CDAB4992F03B74B00376B93 /* prizepantryUITests */,
 				2CDAB5082F0D984400376B93 /* TokenTimeMonitor */,
 				2CDAB5222F0EBDEB00376B93 /* PrizePantryWidgets */,
+				2CDAB5422F0F09FA00376B93 /* TokenTimeReport */,
 				2CDAB4BC2F06231C00376B93 /* Frameworks */,
 				2CDAB47D2F03B74A00376B93 /* Products */,
 			);
@@ -218,6 +274,7 @@
 				2CDAB4962F03B74B00376B93 /* prizepantryUITests.xctest */,
 				2CDAB5052F0D984400376B93 /* TokenTimeMonitor.appex */,
 				2CDAB51D2F0EBDEB00376B93 /* PrizePantryWidgetsExtension.appex */,
+				2CDAB5412F0F09FA00376B93 /* TokenTimeReport.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -225,6 +282,7 @@
 		2CDAB4BC2F06231C00376B93 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2CDAB5572F0F0C9700376B93 /* DeviceActivity.framework */,
 				2CDAB4BF2F06232200376B93 /* CryptoKit.framework */,
 				2CDAB4BD2F06231C00376B93 /* AuthenticationServices.framework */,
 				2CDAB5062F0D984400376B93 /* DeviceActivity.framework */,
@@ -245,12 +303,14 @@
 				2CDAB4792F03B74A00376B93 /* Frameworks */,
 				2CDAB47A2F03B74A00376B93 /* Resources */,
 				2CDAB5142F0D984400376B93 /* Embed Foundation Extensions */,
+				2CDAB5522F0F09FA00376B93 /* Embed ExtensionKit Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				2CDAB50E2F0D984400376B93 /* PBXTargetDependency */,
 				2CDAB5312F0EBDED00376B93 /* PBXTargetDependency */,
+				2CDAB54C2F0F09FA00376B93 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				2CDAB47E2F03B74A00376B93 /* prizepantry */,
@@ -355,6 +415,28 @@
 			productReference = 2CDAB51D2F0EBDEB00376B93 /* PrizePantryWidgetsExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		2CDAB5402F0F09FA00376B93 /* TokenTimeReport */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2CDAB54E2F0F09FA00376B93 /* Build configuration list for PBXNativeTarget "TokenTimeReport" */;
+			buildPhases = (
+				2CDAB53D2F0F09FA00376B93 /* Sources */,
+				2CDAB53E2F0F09FA00376B93 /* Frameworks */,
+				2CDAB53F2F0F09FA00376B93 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				2CDAB5422F0F09FA00376B93 /* TokenTimeReport */,
+			);
+			name = TokenTimeReport;
+			packageProductDependencies = (
+			);
+			productName = TokenTimeReport;
+			productReference = 2CDAB5412F0F09FA00376B93 /* TokenTimeReport.appex */;
+			productType = "com.apple.product-type.extensionkit-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -382,6 +464,9 @@
 					2CDAB51C2F0EBDEB00376B93 = {
 						CreatedOnToolsVersion = 16.4;
 					};
+					2CDAB5402F0F09FA00376B93 = {
+						CreatedOnToolsVersion = 16.4;
+					};
 				};
 			};
 			buildConfigurationList = 2CDAB4772F03B74A00376B93 /* Build configuration list for PBXProject "prizepantry" */;
@@ -406,6 +491,7 @@
 				2CDAB4952F03B74B00376B93 /* prizepantryUITests */,
 				2CDAB5042F0D984400376B93 /* TokenTimeMonitor */,
 				2CDAB51C2F0EBDEB00376B93 /* PrizePantryWidgetsExtension */,
+				2CDAB5402F0F09FA00376B93 /* TokenTimeReport */,
 			);
 		};
 /* End PBXProject section */
@@ -441,6 +527,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		2CDAB51B2F0EBDEB00376B93 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2CDAB53F2F0F09FA00376B93 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -485,6 +578,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2CDAB53D2F0F09FA00376B93 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -507,6 +607,11 @@
 			isa = PBXTargetDependency;
 			target = 2CDAB51C2F0EBDEB00376B93 /* PrizePantryWidgetsExtension */;
 			targetProxy = 2CDAB5302F0EBDED00376B93 /* PBXContainerItemProxy */;
+		};
+		2CDAB54C2F0F09FA00376B93 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2CDAB5402F0F09FA00376B93 /* TokenTimeReport */;
+			targetProxy = 2CDAB54B2F0F09FA00376B93 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -907,6 +1012,63 @@
 			};
 			name = Release;
 		};
+		2CDAB54F2F0F09FA00376B93 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TokenTimeReport/TokenTimeReport.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WG26LH7N8J;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TokenTimeReport/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TokenTimeReport;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.prizepantry.prizepantry.TokenTimeReport;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2CDAB5502F0F09FA00376B93 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TokenTimeReport/TokenTimeReport.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WG26LH7N8J;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TokenTimeReport/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TokenTimeReport;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.prizepantry.prizepantry.TokenTimeReport;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -960,6 +1122,15 @@
 			buildConfigurations = (
 				2CDAB5352F0EBDED00376B93 /* Debug */,
 				2CDAB5362F0EBDED00376B93 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2CDAB54E2F0F09FA00376B93 /* Build configuration list for PBXNativeTarget "TokenTimeReport" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2CDAB54F2F0F09FA00376B93 /* Debug */,
+				2CDAB5502F0F09FA00376B93 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -3,22 +3,19 @@ import FirebaseFirestore
 import FirebaseAuth
 
 class ChildViewModel: ObservableObject {
-    // Parent Mode Data
     @Published var children: [Child] = []
     
-    // Child Mode Data
     @Published var isChildAccount: Bool = false
     @Published var linkedChildProfile: Child?
     
-    // UI State
     @Published var invitationCode: String?
     @Published var settingsUnlockCode: String?
     @Published var errorMessage: String?
     
-    // Internal State
     private var db = Firestore.firestore()
     private var childrenListener: ListenerRegistration?
     private var childProfileListener: ListenerRegistration?
+    private var commandListener: ListenerRegistration? // ✅ NEW
     
     private var currentParentId: String?
     
@@ -33,9 +30,11 @@ class ChildViewModel: ObservableObject {
     deinit {
         childrenListener?.remove()
         childProfileListener?.remove()
+        commandListener?.remove()
     }
     
-    // MARK: - Startup Logic
+    // ... [Previous Role/Auth Functions remain the same] ...
+    
     func checkUserRole() {
         guard let uid = userId else { return }
         
@@ -52,6 +51,7 @@ class ChildViewModel: ObservableObject {
                     self.currentParentId = parentId
                 }
                 self.listenToLinkedChild(parentId: parentId, childId: childId)
+                self.listenForCommands(uid: uid) // ✅ Start listening for Lock commands
                 
             } else {
                 DispatchQueue.main.async { self.isChildAccount = false }
@@ -60,7 +60,8 @@ class ChildViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Parent Logic
+    // ... [Previous Parent/Child Add/Update functions remain the same] ...
+    
     func fetchParentData() {
         guard let uid = userId else { return }
         let ref = db.collection("users").document(uid).collection("children")
@@ -76,28 +77,17 @@ class ChildViewModel: ObservableObject {
         let newChild = Child(name: name, tokenBalance: 0)
         try? db.collection("users").document(uid).collection("children").addDocument(from: newChild)
     }
-    
-    // ✅ FIXED: Now accepts explicit cost and duration arguments to match your View
+
     func updateChildSettings(child: Child, cost: Int, duration: Int) {
         guard let uid = userId, let childId = child.id else { return }
-        
-        let data: [String: Any] = [
-            "unlockCost": cost,
-            "unlockDuration": duration
-        ]
-        
+        let data: [String: Any] = ["unlockCost": cost, "unlockDuration": duration]
         db.collection("users").document(uid).collection("children").document(childId).updateData(data)
     }
     
-    // MARK: - Shared / Token Logic
     func updateTokens(child: Child, amount: Int) {
         let targetUid = isChildAccount ? currentParentId : userId
-        
         guard let uid = targetUid, let childId = child.id else { return }
-        
-        db.collection("users").document(uid).collection("children").document(childId).updateData([
-            "tokenBalance": amount
-        ])
+        db.collection("users").document(uid).collection("children").document(childId).updateData(["tokenBalance": amount])
     }
     
     func deleteChild(at offsets: IndexSet) {
@@ -113,7 +103,7 @@ class ChildViewModel: ObservableObject {
         guard let uid = userId, let childId = child.id else { return }
         db.collection("users").document(uid).collection("children").document(childId).updateData(["rfidTag": tagID])
     }
-    
+
     // MARK: - Admin Access
     func generateSettingsUnlockCode() {
         let code = String(Int.random(in: 100000...999999))
@@ -123,9 +113,7 @@ class ChildViewModel: ObservableObject {
         ]
         
         db.collection("unlock_codes").document(code).setData(data) { error in
-            if let error = error {
-                print("Error generating code: \(error)")
-            } else {
+            if let error = error { print("Error generating code: \(error ?? "nil" as! Error)") } else {
                 DispatchQueue.main.async { self.settingsUnlockCode = code }
             }
         }
@@ -137,13 +125,12 @@ class ChildViewModel: ObservableObject {
             if let document = document, document.exists {
                 docRef.delete()
                 completion(true)
-            } else {
-                completion(false)
-            }
+            } else { completion(false) }
         }
     }
 
-    // MARK: - Invitation System
+    // ... [Invitation Logic remains the same] ...
+    
     func generateInviteCode(for child: Child) {
         guard let uid = userId, let childId = child.id else { return }
         let code = String(Int.random(in: 100000...999999))
@@ -152,9 +139,7 @@ class ChildViewModel: ObservableObject {
         do {
             try db.collection("invitations").document(code).setData(from: invite)
             DispatchQueue.main.async { self.invitationCode = code }
-        } catch {
-            print("Error creating invite: \(error)")
-        }
+        } catch { print("Error creating invite: \(error)") }
     }
 
     func redeemInviteCode(code: String) {
@@ -175,19 +160,42 @@ class ChildViewModel: ObservableObject {
             }
         }
     }
-    
-    // MARK: - Child Logic
+
     func listenToLinkedChild(parentId: String, childId: String) {
         let ref = db.collection("users").document(parentId).collection("children").document(childId)
         childProfileListener = ref.addSnapshotListener { document, error in
             if let error = error { return }
             guard let document = document, document.exists else { return }
-            do {
-                self.linkedChildProfile = try document.data(as: Child.self)
-            } catch {
-                print("Decoding Error: \(error)")
-            }
+            do { self.linkedChildProfile = try document.data(as: Child.self) } catch { print("Decoding Error: \(error)") }
         }
+    }
+    
+    // MARK: - ✅ NEW: Parent "Stop Session" Command
+    func stopSession(for child: Child) {
+        guard let uid = userId, let childId = child.id, let linkedUser = child.linkedUserId else { return }
+        
+        let command = RemoteCommand(type: "lockNow", createdAt: Date())
+        // Send command to the child's user ID command queue
+        try? db.collection("users").document(linkedUser).collection("commands").addDocument(from: command)
+    }
+    
+    // MARK: - ✅ NEW: Child Listen for Commands
+    func listenForCommands(uid: String) {
+        commandListener = db.collection("users").document(uid).collection("commands")
+            .addSnapshotListener { snapshot, error in
+                guard let documents = snapshot?.documents else { return }
+                
+                for doc in documents {
+                    if let command = try? doc.data(as: RemoteCommand.self) {
+                        if command.type == "lockNow" {
+                            // Execute Lock locally
+                            ScreenTimeManager.shared.lockApps()
+                        }
+                        // Delete command after execution
+                        self.db.collection("users").document(uid).collection("commands").document(doc.documentID).delete()
+                    }
+                }
+            }
     }
     
     func signOut() {
@@ -199,8 +207,6 @@ class ChildViewModel: ObservableObject {
             self.currentParentId = nil
             self.invitationCode = nil
             self.errorMessage = nil
-        } catch {
-            print("Error signing out: \(error.localizedDescription)")
-        }
+        } catch { print("Error: \(error)") }
     }
 }
